@@ -14,90 +14,72 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #0d0d1a;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
-            color: #e2e8f0;
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            background: #13132b;
+            background: white;
             border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             overflow: hidden;
-            border: 1px solid #1e1e3f;
         }
 
         header {
-            background: linear-gradient(135deg, #1a1a3e 0%, #0d0d2b 100%);
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
             color: white;
-            padding: 32px 40px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            border-bottom: 1px solid #2a2a5a;
-        }
-
-        .logo-img {
-            height: 36px;
-            width: auto;
+            padding: 40px;
+            text-align: center;
         }
 
         header h1 {
-            font-size: 1.6em;
+            font-size: 2.5em;
+            margin-bottom: 10px;
             font-weight: 600;
-            color: #ffffff;
-            letter-spacing: -0.3px;
-        }
-
-        .header-right {
-            margin-left: auto;
-            display: flex;
-            align-items: center;
-            gap: 16px;
         }
 
         header p {
-            font-size: 0.85em;
-            opacity: 0.6;
+            font-size: 1em;
+            opacity: 0.95;
             letter-spacing: 0.5px;
-            color: #94a3b8;
         }
 
         .tab-bar {
             display: flex;
-            background: #0d0d1f;
-            border-bottom: 1px solid #1e1e3f;
+            background: #f3f4f6;
+            border-bottom: 2px solid #e5e7eb;
         }
 
         .tab-btn {
             flex: 1;
-            padding: 14px;
+            padding: 16px;
             text-align: center;
             background: none;
             border: none;
             cursor: pointer;
-            font-size: 0.95em;
+            font-size: 1em;
             font-weight: 500;
-            color: #64748b;
+            color: #6b7280;
             transition: all 0.3s ease;
         }
 
         .tab-btn.active {
-            background: #13132b;
-            color: #60a5fa;
-            border-bottom: 2px solid #3b82f6;
+            background: white;
+            color: #2563eb;
+            border-bottom: 3px solid #2563eb;
+            margin-bottom: -2px;
         }
 
         .tab-btn:hover:not(.active) {
-            color: #94a3b8;
-            background: #111127;
+            color: #374151;
+            background: #f9fafb;
         }
 
         .main-content {
-            padding: 32px 40px;
+            padding: 40px;
         }
 
         .tab-content {
@@ -109,29 +91,23 @@
         }
 
         .search-container {
-            margin-bottom: 24px;
+            margin-bottom: 30px;
             position: relative;
         }
 
         .search-input {
             width: 100%;
-            padding: 12px 16px;
-            font-size: 0.95em;
-            border: 1px solid #2a2a5a;
+            padding: 14px 18px;
+            font-size: 1em;
+            border: 2px solid #e5e7eb;
             border-radius: 8px;
-            background: #1a1a3e;
-            color: #e2e8f0;
             transition: all 0.3s ease;
         }
 
         .search-input:focus {
             outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-        }
-
-        .search-input::placeholder {
-            color: #475569;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
         .autocomplete-list {
@@ -139,15 +115,15 @@
             top: 100%;
             left: 0;
             right: 0;
-            background: #1a1a3e;
-            border: 1px solid #3b82f6;
+            background: white;
+            border: 2px solid #2563eb;
             border-top: none;
             border-radius: 0 0 8px 8px;
             max-height: 300px;
             overflow-y: auto;
             display: none;
             z-index: 10;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         }
 
         .autocomplete-list.active {
@@ -155,61 +131,60 @@
         }
 
         .autocomplete-item {
-            padding: 10px 16px;
+            padding: 12px 18px;
             cursor: pointer;
-            border-bottom: 1px solid #1e1e3f;
+            border-bottom: 1px solid #f3f4f6;
             transition: background 0.2s ease;
-            color: #e2e8f0;
         }
 
         .autocomplete-item:hover,
         .autocomplete-item.selected {
-            background: #252550;
-            color: #60a5fa;
+            background: #eff6ff;
+            color: #2563eb;
         }
 
         .period-buttons {
             display: flex;
-            gap: 8px;
-            margin-bottom: 24px;
+            gap: 10px;
+            margin-bottom: 30px;
             flex-wrap: wrap;
         }
 
         .period-btn {
-            padding: 8px 16px;
-            border: 1px solid #2a2a5a;
-            background: #1a1a3e;
+            padding: 10px 18px;
+            border: 2px solid #e5e7eb;
+            background: white;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 0.9em;
+            font-size: 0.95em;
             font-weight: 500;
-            color: #64748b;
+            color: #6b7280;
             transition: all 0.3s ease;
         }
 
         .period-btn:hover {
-            border-color: #3b82f6;
-            color: #60a5fa;
+            border-color: #2563eb;
+            color: #2563eb;
         }
 
         .period-btn.active {
-            background: #3b82f6;
-            border-color: #3b82f6;
+            background: #2563eb;
+            border-color: #2563eb;
             color: white;
         }
 
         .chart-container {
-            background: #1a1a3e;
+            background: #f9fafb;
             border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 24px;
-            border: 1px solid #2a2a5a;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 2px solid #e5e7eb;
         }
 
         .chart-wrapper {
             position: relative;
-            height: 380px;
-            margin-bottom: 16px;
+            height: 400px;
+            margin-bottom: 20px;
         }
 
         canvas {
@@ -218,156 +193,151 @@
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
         }
 
         .stats-card {
-            background: #1a1a3e;
-            border: 1px solid #2a2a5a;
+            background: white;
+            border: 2px solid #e5e7eb;
             border-radius: 8px;
-            padding: 16px;
+            padding: 20px;
             text-align: center;
             transition: all 0.3s ease;
         }
 
         .stats-card:hover {
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
-            border-color: #3b82f6;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-color: #2563eb;
         }
 
         .stats-card h3 {
-            color: #64748b;
-            font-size: 0.8em;
+            color: #6b7280;
+            font-size: 0.9em;
             font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
         }
 
         .stats-card .value {
-            font-size: 1.7em;
+            font-size: 2em;
             font-weight: 700;
-            color: #f1f5f9;
+            color: #1f2937;
         }
 
         .license-card {
-            background: #1a1a3e;
-            border: 1px solid #22c55e40;
+            background: white;
+            border: 2px solid #16a34a;
             border-radius: 8px;
-            padding: 16px;
+            padding: 20px;
             text-align: center;
             transition: all 0.3s ease;
         }
 
         .license-card:hover {
-            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.1);
-            border-color: #22c55e;
+            box-shadow: 0 10px 25px rgba(22, 163, 74, 0.2);
+            border-color: #15803d;
         }
 
         .license-card h3 {
-            color: #64748b;
-            font-size: 0.8em;
+            color: #6b7280;
+            font-size: 0.9em;
             font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
         }
 
         .license-card .value {
-            font-size: 1.7em;
+            font-size: 2em;
             font-weight: 700;
-            color: #22c55e;
+            color: #16a34a;
+        }
+
+        .license-card .value.date-val {
+            font-size: 1.1em;
+            font-weight: 600;
         }
 
         .upsell-card {
-            background: #1a1a3e;
-            border: 1px solid #f59e0b40;
+            background: #fffbeb;
+            border: 2px solid #f59e0b;
             border-radius: 8px;
-            padding: 16px;
+            padding: 20px;
             text-align: center;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
 
         .upsell-card:hover {
-            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.1);
-            border-color: #f59e0b;
+            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.2);
+            border-color: #d97706;
         }
 
         .upsell-card h3 {
-            color: #64748b;
-            font-size: 0.8em;
+            color: #6b7280;
+            font-size: 0.9em;
             font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
         }
 
         .upsell-card .value {
-            font-size: 1.7em;
+            font-size: 2em;
             font-weight: 700;
-            color: #f59e0b;
+            color: #d97706;
         }
 
         .banner {
-            background: linear-gradient(135deg, #1a1a3e 0%, #1e2550 100%);
-            border: 1px solid #3b82f6;
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border: 2px solid #2563eb;
             border-radius: 8px;
-            padding: 16px 20px;
-            margin-bottom: 24px;
-            color: #93c5fd;
+            padding: 20px;
+            margin-bottom: 30px;
+            color: #1e40af;
         }
 
         .banner h2 {
-            font-size: 1.2em;
-            margin-bottom: 6px;
+            font-size: 1.3em;
+            margin-bottom: 10px;
             font-weight: 600;
-            color: #e2e8f0;
         }
 
         .banner p {
-            font-size: 0.9em;
+            font-size: 0.95em;
             line-height: 1.5;
-            color: #94a3b8;
-        }
-
-        .section-heading {
-            margin-bottom: 16px;
-            font-size: 1em;
-            color: #94a3b8;
-            font-weight: 600;
-            letter-spacing: 0.3px;
         }
 
         .members-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 16px;
-            border: 1px solid #2a2a5a;
+            margin-top: 20px;
+            border: 2px solid #e5e7eb;
             border-radius: 8px;
             overflow: hidden;
         }
 
         .members-table thead {
-            background: #0d0d1f;
-            border-bottom: 1px solid #2a2a5a;
+            background: #f3f4f6;
+            border-bottom: 2px solid #e5e7eb;
         }
 
         .members-table th {
-            padding: 12px 14px;
+            padding: 14px;
             text-align: left;
             font-weight: 600;
-            color: #94a3b8;
-            font-size: 0.8em;
+            color: #1f2937;
+            font-size: 0.9em;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
         .members-table td {
-            padding: 12px 14px;
-            border-bottom: 1px solid #1e1e3f;
-            color: #e2e8f0;
+            padding: 14px;
+            border-bottom: 1px solid #e5e7eb;
         }
 
         .members-table tbody tr {
@@ -376,12 +346,12 @@
         }
 
         .members-table tbody tr:hover {
-            background: #252550;
+            background: #eff6ff;
         }
 
         .members-table tbody tr.highlighted {
-            background: #1e2f5a;
-            border-left: 3px solid #3b82f6;
+            background: #dbeafe;
+            border-left: 3px solid #2563eb;
         }
 
         .members-table tbody tr:last-child td {
@@ -389,48 +359,46 @@
         }
 
         .clickable-email {
-            color: #60a5fa;
+            color: #2563eb;
             text-decoration: underline;
-            text-decoration-color: #60a5fa40;
+            text-decoration-color: #2563eb40;
             cursor: pointer;
-            transition: color 0.2s;
         }
 
         .clickable-email:hover {
-            color: #93c5fd;
-            text-decoration-color: #93c5fd;
+            color: #1d4ed8;
         }
 
         .no-data {
             text-align: center;
             padding: 40px;
-            color: #475569;
-            font-size: 1em;
+            color: #6b7280;
+            font-size: 1.1em;
         }
 
         .upsell-users-list {
             margin-top: 16px;
-            padding: 12px 16px;
-            background: #1a1a3e;
-            border: 1px solid #f59e0b30;
+            padding: 14px 18px;
+            background: #fffbeb;
+            border: 2px solid #f59e0b40;
             border-radius: 8px;
             display: none;
         }
 
         .upsell-users-list h4 {
-            color: #f59e0b;
+            color: #d97706;
             font-size: 0.85em;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         .upsell-users-list .upsell-user {
             padding: 6px 0;
-            border-bottom: 1px solid #1e1e3f;
+            border-bottom: 1px solid #fde68a;
             font-size: 0.9em;
-            color: #e2e8f0;
+            color: #1f2937;
         }
 
         .upsell-users-list .upsell-user:last-child {
@@ -438,22 +406,22 @@
         }
 
         .upsell-users-list .upsell-user span {
-            color: #64748b;
+            color: #6b7280;
             font-size: 0.85em;
         }
 
         @media (max-width: 768px) {
             header h1 {
-                font-size: 1.3em;
+                font-size: 1.8em;
             }
 
             .main-content {
-                padding: 16px;
+                padding: 20px;
             }
 
             .tab-btn {
-                font-size: 0.85em;
-                padding: 10px;
+                font-size: 0.9em;
+                padding: 12px;
             }
 
             .stats-grid {
@@ -461,12 +429,12 @@
             }
 
             .period-buttons {
-                gap: 6px;
+                gap: 8px;
             }
 
             .period-btn {
-                padding: 6px 10px;
-                font-size: 0.8em;
+                padding: 8px 12px;
+                font-size: 0.85em;
             }
         }
     </style>
@@ -474,14 +442,8 @@
 <body>
     <div class="container">
         <header>
-            <svg class="logo-img" viewBox="0 0 120 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M8 28L16 8L24 28" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M11 22h10" stroke="#60a5fa" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            <h1>Usage Analytics</h1>
-            <div class="header-right">
-                <p id="headerTagline">Data Source: BigQuery || Period: Jul '25 to date</p>
-            </div>
+            <h1>Usage Analytics Dashboard</h1>
+            <p id="headerTagline">Data Source: BigQuery || Period: Jul '25 to date</p>
         </header>
 
         <div class="tab-bar">
@@ -493,7 +455,7 @@
             <!-- USER TAB -->
             <div class="tab-content active" data-tab="user">
                 <div class="search-container">
-                    <input type="text" id="userSearch" class="search-input" placeholder="Search by email or name...">
+                    <input type="text" id="userSearch" class="search-input" placeholder="Search for a user...">
                     <div id="userAutocomplete" class="autocomplete-list"></div>
                 </div>
 
@@ -553,7 +515,7 @@
                 <div id="orgBanner" class="banner" style="display: none;">
                     <h2 id="bannerOrgName"></h2>
                     <p id="bannerOrgEmail"></p>
-                    <div id="orgBannerSubscription" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #3b82f640;"></div>
+                    <div id="orgBannerSubscription" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(30, 64, 175, 0.3);"></div>
                 </div>
 
                 <div class="chart-container">
@@ -581,7 +543,7 @@
                 </div>
 
                 <div id="licenseStatsContainer" style="display: none;">
-                    <h3 class="section-heading">License Information</h3>
+                    <h3 style="margin-bottom: 20px; font-size: 1.1em; color: #1f2937; font-weight: 600;">License Information</h3>
                     <div class="stats-grid" id="licenseGrid">
                         <div class="license-card">
                             <h3>Paid Licenses</h3>
@@ -599,7 +561,15 @@
                             <h3>Inactive/Removed</h3>
                             <div class="value" id="inactiveMembersStat">0</div>
                         </div>
-                        <div class="upsell-card" id="sameDomainCard" style="cursor: pointer;">
+                        <div class="license-card">
+                            <h3>License Start</h3>
+                            <div class="value date-val" id="licenseStartStat">—</div>
+                        </div>
+                        <div class="license-card">
+                            <h3>License End</h3>
+                            <div class="value date-val" id="licenseEndStat">—</div>
+                        </div>
+                        <div class="upsell-card" id="sameDomainCard">
                             <h3>Same Domain, Not in Org</h3>
                             <div class="value" id="sameDomainStat">0</div>
                         </div>
@@ -607,8 +577,8 @@
                     <div class="upsell-users-list" id="sameDomainList"></div>
                 </div>
 
-                <div id="memberBreakdown" style="margin-top: 32px;">
-                    <h3 class="section-heading">Member Breakdown <span style="font-weight:400; font-size:0.85em; color:#475569;">(click a row to highlight on chart)</span></h3>
+                <div id="memberBreakdown" style="margin-top: 40px;">
+                    <h3 style="margin-bottom: 20px; font-size: 1.1em; color: #1f2937; font-weight: 600;">Member Breakdown <span style="font-weight:400; font-size:0.85em; color:#6b7280;">(click a row to highlight on chart)</span></h3>
                     <table class="members-table">
                         <thead>
                             <tr>
@@ -641,8 +611,8 @@
         let orgChartObj = null;
         let latestDate = null;
         let earliestDate = null;
-        let highlightedMember = null; // email of currently highlighted member
-        let orgChartData = null; // stored for re-render on highlight
+        let highlightedMember = null;
+        let orgChartData = null;
 
         const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -657,7 +627,7 @@
             } catch (err) {
                 console.error('Init error:', err);
                 document.querySelector('.main-content').innerHTML =
-                    '<div class="no-data" style="color:#ef4444;">Failed to load data. Ensure usage_data.json, org_data.json, and sub_data.json are in the same folder.</div>';
+                    '<div class="no-data" style="color:red;">Failed to load data. Ensure usage_data.json, org_data.json, and sub_data.json are in the same folder.</div>';
             }
         });
 
@@ -774,8 +744,8 @@
             acList.innerHTML = suggestions.map((s, i) =>
                 `<div class="autocomplete-item" data-idx="${i}">
                     <strong>${esc(s.e)}</strong><br>
-                    <span style="color:#64748b;font-size:0.85em">${esc(s.u || '(no name)')}</span>
-                    ${s.c ? '<span style="color:#475569;font-size:0.8em;font-style:italic"> — ' + esc(s.c) + '</span>' : ''}
+                    <span style="color:#6b7280;font-size:0.85em">${esc(s.u || '(no name)')}</span>
+                    ${s.c ? '<span style="color:#9ca3af;font-size:0.8em;font-style:italic"> — ' + esc(s.c) + '</span>' : ''}
                 </div>`
             ).join('');
             acList.classList.add('active');
@@ -843,8 +813,8 @@
             acList.innerHTML = suggestions.map((o, i) => {
                 const active = o.members.filter(m => m.status === 'active').length;
                 return `<div class="autocomplete-item" data-idx="${i}">
-                    <strong>${esc(o.on)}</strong> <span style="color:#64748b;font-size:0.85em">(ID: ${o.oid})</span><br>
-                    <span style="color:#475569;font-size:0.8em">${o.members.length} members (${active} active)</span>
+                    <strong>${esc(o.on)}</strong> <span style="color:#6b7280;font-size:0.85em">(ID: ${o.oid})</span><br>
+                    <span style="color:#9ca3af;font-size:0.8em">${o.members.length} members (${active} active)</span>
                 </div>`;
             }).join('');
             acList.classList.add('active');
@@ -864,12 +834,13 @@
             document.getElementById('bannerOrgName').textContent = org.on;
             document.getElementById('bannerOrgEmail').textContent = `Org ID: ${org.oid} | ${org.members.length} members (${active} active)`;
 
+            // Subscription banner — show license start/end
             const sub = subIndex.get(org.oid);
             const subEl = document.getElementById('orgBannerSubscription');
             if (sub) {
-                subEl.innerHTML = `<strong style="color:#e2e8f0">Plan:</strong> ${esc(sub.plan)} | <strong style="color:#e2e8f0">Billing:</strong> ${esc(sub.billing)} | <strong style="color:#e2e8f0">Licenses:</strong> ${sub.licenses}`;
+                subEl.innerHTML = `<strong>Plan:</strong> ${esc(sub.plan)} | <strong>Licenses:</strong> ${sub.licenses} | <strong>Start:</strong> ${fmtDate(sub.start)} | <strong>End:</strong> ${fmtDate(sub.end)}`;
             } else {
-                subEl.innerHTML = '<em style="color:#64748b">No active subscription</em>';
+                subEl.innerHTML = '<em>No active subscription</em>';
             }
 
             // License stats
@@ -879,16 +850,15 @@
             document.getElementById('totalMembersStat').textContent = org.members.length;
             document.getElementById('activeMembersStat').textContent = active;
             document.getElementById('inactiveMembersStat').textContent = org.members.length - active;
+            document.getElementById('licenseStartStat').textContent = sub ? fmtDate(sub.start) : '—';
+            document.getElementById('licenseEndStat').textContent = sub ? fmtDate(sub.end) : '—';
 
-            // Same-domain-not-in-org (upsell)
             computeSameDomainUsers(org);
-
             updateOrgChart();
         }
 
         // ─── Same Domain Upsell ───
         function computeSameDomainUsers(org) {
-            // Extract unique domains from org members (ignore generic ones)
             const genericDomains = new Set(['gmail.com','yahoo.com','hotmail.com','outlook.com','aol.com','icloud.com','mail.com','protonmail.com','live.com','msn.com','ymail.com','googlemail.com']);
             const orgDomains = new Set();
             const orgEmails = new Set();
@@ -898,8 +868,7 @@
                 if (domain && !genericDomains.has(domain)) orgDomains.add(domain);
             }
 
-            // Find users in usageData with matching domain but NOT in org
-            const sameDomainUsers = new Map(); // email → {u, totalMin}
+            const sameDomainUsers = new Map();
             if (orgDomains.size > 0) {
                 for (const r of usageData) {
                     const eLower = r.e.toLowerCase();
@@ -917,7 +886,6 @@
             const count = sameDomainUsers.size;
             document.getElementById('sameDomainStat').textContent = count;
 
-            // Build expandable list
             const listEl = document.getElementById('sameDomainList');
             const cardEl = document.getElementById('sameDomainCard');
 
@@ -927,10 +895,9 @@
                     sorted.map(u =>
                         `<div class="upsell-user">
                             <strong>${esc(u.e)}</strong> <span>${esc(u.u || '')}</span>
-                            <span style="float:right; color:#f59e0b;">${fmtHours(u.totalMin)} total</span>
+                            <span style="float:right; color:#d97706;">${fmtHours(u.totalMin)} total</span>
                         </div>`
                     ).join('');
-
                 cardEl.onclick = () => {
                     listEl.style.display = listEl.style.display === 'block' ? 'none' : 'block';
                 };
@@ -941,7 +908,7 @@
             }
         }
 
-        // ─── User Chart ───
+        // ─── User Chart (minutes) ───
         function updateUserChart() {
             if (!selectedUser) return;
 
@@ -973,7 +940,6 @@
                 values = sortedMonths.map(mk => Math.round(monthMap.get(mk) * 100) / 100);
             }
 
-            // Stats (user tab stays in minutes)
             const totalMin = filtered.reduce((s, r) => s + r.m, 0);
             const activeDays = dailyMap.size;
             const avgDaily = activeDays > 0 ? totalMin / activeDays : 0;
@@ -989,7 +955,7 @@
                 type: 'bar',
                 data: {
                     labels,
-                    datasets: [{ label: 'Usage (minutes)', data: values, backgroundColor: '#3b82f6', borderColor: '#2563eb', borderWidth: 1, borderRadius: 3 }]
+                    datasets: [{ label: 'Usage (minutes)', data: values, backgroundColor: '#2563eb', borderColor: '#1e40af', borderWidth: 1, borderRadius: 4 }]
                 },
                 options: chartOptions(isShort ? 'Minutes per Day' : 'Minutes per Month', 'min')
             });
@@ -1008,12 +974,11 @@
                 memberEmails.has(r.e) && r.d >= startStr && r.d <= endStr
             );
 
-            // Aggregate by date (total org)
             const dailyMap = new Map();
             for (const r of filtered) dailyMap.set(r.d, (dailyMap.get(r.d) || 0) + r.m);
 
             // Per-member daily for highlight
-            const memberDailyMap = new Map(); // email → Map(date → min)
+            const memberDailyMap = new Map();
             for (const r of filtered) {
                 if (!memberDailyMap.has(r.e)) memberDailyMap.set(r.e, new Map());
                 const md = memberDailyMap.get(r.e);
@@ -1038,7 +1003,6 @@
                 orgValues = dateKeys.map(mk => roundHrs(monthMap.get(mk) || 0));
             }
 
-            // Store for highlight re-render
             orgChartData = { labels, orgValues, dateKeys, isShort, memberDailyMap, filtered, dailyMap };
 
             // Stats in hours
@@ -1078,16 +1042,15 @@
                 </tr>`
             ).join('') || '<tr><td colspan="4" class="no-data">No usage data in this period</td></tr>';
 
-            // Attach click handlers on member rows
+            // Click handlers on member rows
             tbody.querySelectorAll('tr[data-email]').forEach(tr => {
                 tr.addEventListener('click', () => {
                     const email = tr.dataset.email;
                     if (highlightedMember === email) {
-                        highlightedMember = null; // toggle off
+                        highlightedMember = null;
                     } else {
                         highlightedMember = email;
                     }
-                    // Update row highlighting
                     tbody.querySelectorAll('tr').forEach(r => r.classList.remove('highlighted'));
                     if (highlightedMember) tr.classList.add('highlighted');
                     renderOrgChartWithHighlight();
@@ -1104,10 +1067,10 @@
             const datasets = [{
                 label: 'Org Usage (hours)',
                 data: orgValues,
-                backgroundColor: highlightedMember ? '#3b82f640' : '#3b82f6',
-                borderColor: highlightedMember ? '#3b82f660' : '#2563eb',
+                backgroundColor: highlightedMember ? 'rgba(37, 99, 235, 0.25)' : '#2563eb',
+                borderColor: highlightedMember ? 'rgba(37, 99, 235, 0.4)' : '#1e40af',
                 borderWidth: 1,
-                borderRadius: 3,
+                borderRadius: 4,
                 order: 2
             }];
 
@@ -1117,7 +1080,6 @@
                 if (isShort) {
                     memberValues = dateKeys.map(d => roundHrs(mDaily.get(d) || 0));
                 } else {
-                    // Monthly aggregation for highlighted member
                     const monthMap = new Map();
                     for (const [d, m] of mDaily) {
                         const mk = d.substring(0, 7);
@@ -1126,7 +1088,6 @@
                     memberValues = dateKeys.map(mk => roundHrs(monthMap.get(mk) || 0));
                 }
 
-                // Find member name
                 const member = selectedOrg.members.find(m => m.e === highlightedMember);
                 const memberName = member ? (member.u || highlightedMember) : highlightedMember;
 
@@ -1134,9 +1095,9 @@
                     label: memberName + ' (hours)',
                     data: memberValues,
                     backgroundColor: '#f59e0bcc',
-                    borderColor: '#f59e0b',
+                    borderColor: '#d97706',
                     borderWidth: 2,
-                    borderRadius: 3,
+                    borderRadius: 4,
                     order: 1
                 });
             }
@@ -1183,6 +1144,11 @@
             if (hrs >= 100) return Math.round(hrs).toLocaleString() + ' hrs';
             return hrs.toFixed(1) + ' hrs';
         }
+        function fmtDate(dateStr) {
+            if (!dateStr) return '—';
+            const [y, m, d] = dateStr.split('-');
+            return d + ' ' + MONTHS[parseInt(m) - 1] + ' ' + y;
+        }
 
         function chartOptions(yLabel, unit) {
             const isHrs = unit === 'hrs';
@@ -1190,24 +1156,22 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: true, labels: { font: { size: 11, weight: '600' }, color: '#94a3b8', usePointStyle: true } },
+                    legend: { display: true, labels: { font: { size: 12, weight: '600' }, color: '#374151', usePointStyle: true } },
                     tooltip: {
-                        backgroundColor: '#1e1e3f', titleFont: { size: 12 }, bodyFont: { size: 11 },
-                        titleColor: '#e2e8f0', bodyColor: '#94a3b8',
+                        backgroundColor: '#1f2937', titleFont: { size: 13 }, bodyFont: { size: 12 },
                         padding: 10, cornerRadius: 6,
-                        borderColor: '#2a2a5a', borderWidth: 1,
                         callbacks: { label: ctx => isHrs ? ctx.parsed.y.toFixed(2) + ' hrs' : ctx.parsed.y.toFixed(1) + ' min' }
                     }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        title: { display: true, text: yLabel, font: { size: 11, weight: '600' }, color: '#64748b' },
-                        ticks: { color: '#475569', callback: v => isHrs ? v.toFixed(1) + ' hrs' : Math.round(v) + ' min' },
-                        grid: { color: '#1e1e3f' }
+                        title: { display: true, text: yLabel, font: { size: 12, weight: '600' }, color: '#6b7280' },
+                        ticks: { color: '#9ca3af', callback: v => isHrs ? v.toFixed(1) + ' hrs' : Math.round(v) + ' min' },
+                        grid: { color: 'rgba(0,0,0,0.04)' }
                     },
                     x: {
-                        ticks: { color: '#475569', maxRotation: 45, autoSkip: true, maxTicksLimit: 20 },
+                        ticks: { color: '#9ca3af', maxRotation: 45, autoSkip: true, maxTicksLimit: 20 },
                         grid: { display: false }
                     }
                 }
