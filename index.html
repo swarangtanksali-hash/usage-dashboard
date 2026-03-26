@@ -28,13 +28,54 @@
 
         main { max-width: 1400px; margin: 0 auto; padding: 2rem; }
 
-        
+        /* Tab System */
+        .tab-bar {
+            display: flex;
+            gap: 0;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 0.75rem 0.75rem 0 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .tab-btn {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #64748b;
+            transition: all 0.2s;
+            position: relative;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab-btn:hover {
+            color: #2563eb;
+        }
+
+        .tab-btn.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+
         .search-section {
             background: white;
-            border-radius: 0.75rem;
+            border-radius: 0 0.75rem 0.75rem 0.75rem;
             padding: 1.5rem;
             margin-bottom: 2rem;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
         }
 
         .search-container {
@@ -125,7 +166,13 @@
             font-style: italic;
         }
 
-        .selected-user-banner {
+        .ac-org-info {
+            color: #94a3b8;
+            font-size: 0.75rem;
+            margin-top: 0.1rem;
+        }
+
+        .selected-banner {
             background: #eff6ff;
             border: 1px solid #bfdbfe;
             border-radius: 0.5rem;
@@ -136,26 +183,26 @@
             gap: 1rem;
         }
 
-        .selected-user-banner.visible {
+        .selected-banner.visible {
             display: flex;
         }
 
-        .selected-user-info {
+        .selected-info {
             flex: 1;
         }
 
-        .selected-user-email {
+        .selected-primary {
             font-weight: 700;
             color: #1e40af;
             font-size: 1rem;
         }
 
-        .selected-user-name {
+        .selected-secondary {
             color: #64748b;
             font-size: 0.85rem;
         }
 
-        .selected-user-customer {
+        .selected-tertiary {
             color: #94a3b8;
             font-size: 0.8rem;
         }
@@ -208,6 +255,11 @@
             padding: 1.5rem;
             margin-bottom: 2rem;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            display: none;
+        }
+
+        .charts-section.visible {
+            display: block;
         }
 
         .chart-container {
@@ -243,6 +295,70 @@
 
         .stat-value { font-size: 1.75rem; font-weight: 700; color: #1e293b; }
         .stat-detail { font-size: 0.75rem; color: #94a3b8; margin-top: 0.5rem; }
+
+        /* Member Table */
+        .member-table-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .member-table-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 1rem;
+        }
+
+        .member-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .member-table thead {
+            background: #f8fafc;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .member-table th {
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .member-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .member-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .member-table tbody tr.removed {
+            opacity: 0.6;
+            background: #f8fafc;
+        }
+
+        .member-status {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .member-status.active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .member-status.removed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
 
         .empty-state {
             text-align: center;
@@ -284,6 +400,9 @@
             .search-input-wrapper { min-width: 100%; }
             .stats-grid { grid-template-columns: 1fr; }
             .chart-container { height: 300px; }
+            .tab-btn { padding: 0.75rem 1rem; font-size: 0.85rem; }
+            .member-table { font-size: 0.75rem; }
+            .member-table th, .member-table td { padding: 0.5rem; }
         }
     </style>
 </head>
@@ -291,255 +410,343 @@
     <header>
         <div class="header-content">
             <div class="logo">Usage Analytics Dashboard</div>
-            <div class="header-tagline">Track and analyze user engagement metrics | Data from Jul 2025</div>
+            <div class="header-tagline">Track and analyze user and organization engagement metrics | Data from Jul 2025</div>
         </div>
     </header>
 
     <main>
-        <div class="search-section">
-            <div class="search-container">
-                <div class="search-input-wrapper">
-                    <input
-                        type="text"
-                        class="search-input"
-                        id="searchInput"
-                        placeholder="Paste or type a user email or name and press Enter..."
-                        autocomplete="off"
-                    >
-                    <div class="autocomplete-list" id="autocompleteList"></div>
-                    <div class="search-hint">Tip: Paste an email address and hit Enter for instant results</div>
-                </div>
-            </div>
-
-            <div class="selected-user-banner" id="selectedBanner">
-                <div class="selected-user-info">
-                    <div class="selected-user-email" id="bannerEmail"></div>
-                    <div class="selected-user-name" id="bannerName"></div>
-                    <div class="selected-user-customer" id="bannerCustomer"></div>
-                </div>
-                <button class="clear-btn" id="clearBtn">Clear</button>
-            </div>
-
-            <div class="time-period-buttons">
-                <button class="period-btn" data-days="7">Last 7 days</button>
-                <button class="period-btn active" data-days="30">Last 30 days</button>
-                <button class="period-btn" data-days="60">Last 60 days</button>
-                <button class="period-btn" data-days="90">Last 90 days</button>
-                <button class="period-btn" data-days="all">All time</button>
-            </div>
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+            <button class="tab-btn active" data-tab="user">User</button>
+            <button class="tab-btn" data-tab="organization">Organization</button>
         </div>
 
-        <div class="charts-section" id="chartsSection" style="display: none;">
-            <div id="errorMessage"></div>
-            <div class="chart-container">
-                <canvas id="usageChart"></canvas>
+        <!-- USER TAB -->
+        <div class="tab-content active" data-tab="user">
+            <div class="search-section">
+                <div class="search-container">
+                    <div class="search-input-wrapper">
+                        <input
+                            type="text"
+                            class="search-input"
+                            id="userSearchInput"
+                            placeholder="Paste or type a user email or name and press Enter..."
+                            autocomplete="off"
+                        >
+                        <div class="autocomplete-list" id="userAutocompleteList"></div>
+                        <div class="search-hint">Tip: Paste an email address and hit Enter for instant results</div>
+                    </div>
+                </div>
+
+                <div class="selected-banner" id="userSelectedBanner">
+                    <div class="selected-info">
+                        <div class="selected-primary" id="userBannerEmail"></div>
+                        <div class="selected-secondary" id="userBannerName"></div>
+                        <div class="selected-tertiary" id="userBannerCustomer"></div>
+                    </div>
+                    <button class="clear-btn" id="userClearBtn">Clear</button>
+                </div>
+
+                <div class="time-period-buttons" id="userTimePeriods">
+                    <button class="period-btn" data-days="7">Last 7 days</button>
+                    <button class="period-btn active" data-days="30">Last 30 days</button>
+                    <button class="period-btn" data-days="60">Last 60 days</button>
+                    <button class="period-btn" data-days="90">Last 90 days</button>
+                    <button class="period-btn" data-days="all">All time</button>
+                </div>
             </div>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Total Minutes</div>
-                    <div class="stat-value" id="totalMinutes">0</div>
-                    <div class="stat-detail" id="totalHours"></div>
+
+            <div class="charts-section" id="userChartsSection">
+                <div id="userErrorMessage"></div>
+                <div class="chart-container">
+                    <canvas id="userChart"></canvas>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">Avg Daily Minutes</div>
-                    <div class="stat-value" id="avgDaily">0</div>
-                    <div class="stat-detail">minutes per active day</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Active Days</div>
-                    <div class="stat-value" id="activeDays">0</div>
-                    <div class="stat-detail" id="activeDaysDetail"></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Peak Day</div>
-                    <div class="stat-value" id="peakDay">0</div>
-                    <div class="stat-detail" id="peakDayDate"></div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Minutes</div>
+                        <div class="stat-value" id="userTotalMinutes">0</div>
+                        <div class="stat-detail" id="userTotalHours"></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Avg Daily Minutes</div>
+                        <div class="stat-value" id="userAvgDaily">0</div>
+                        <div class="stat-detail">minutes per active day</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Active Days</div>
+                        <div class="stat-value" id="userActiveDays">0</div>
+                        <div class="stat-detail" id="userActiveDaysDetail"></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Peak Day</div>
+                        <div class="stat-value" id="userPeakDay">0</div>
+                        <div class="stat-detail" id="userPeakDayDate"></div>
+                    </div>
                 </div>
             </div>
+
+            <div class="empty-state" id="userEmptyState">
+                <div class="empty-state-icon">📊</div>
+                <div class="empty-state-text">Paste or type a user email / name and press Enter</div>
+                <div class="empty-state-subtext">View daily usage in minutes across any time range</div>
+            </div>
+
+            <div class="data-refresh-note" id="userDataNote"></div>
         </div>
 
-        <div class="empty-state" id="emptyState">
-            <div class="empty-state-icon">📊</div>
-            <div class="empty-state-text">Paste or type a user email / name and press Enter</div>
-            <div class="empty-state-subtext">View daily usage in minutes across any time range</div>
-        </div>
+        <!-- ORGANIZATION TAB -->
+        <div class="tab-content" data-tab="organization">
+            <div class="search-section">
+                <div class="search-container">
+                    <div class="search-input-wrapper">
+                        <input
+                            type="text"
+                            class="search-input"
+                            id="orgSearchInput"
+                            placeholder="Search by org name, org ID, or member email..."
+                            autocomplete="off"
+                        >
+                        <div class="autocomplete-list" id="orgAutocompleteList"></div>
+                        <div class="search-hint">Tip: Enter an org ID number for exact match</div>
+                    </div>
+                </div>
 
-        <div class="data-refresh-note" id="dataNote"></div>
+                <div class="selected-banner" id="orgSelectedBanner">
+                    <div class="selected-info">
+                        <div class="selected-primary" id="orgBannerName"></div>
+                        <div class="selected-secondary" id="orgBannerOid"></div>
+                        <div class="selected-tertiary" id="orgBannerMembers"></div>
+                    </div>
+                    <button class="clear-btn" id="orgClearBtn">Clear</button>
+                </div>
+
+                <div class="time-period-buttons" id="orgTimePeriods">
+                    <button class="period-btn" data-days="7">Last 7 days</button>
+                    <button class="period-btn active" data-days="30">Last 30 days</button>
+                    <button class="period-btn" data-days="60">Last 60 days</button>
+                    <button class="period-btn" data-days="90">Last 90 days</button>
+                    <button class="period-btn" data-days="all">All time</button>
+                </div>
+            </div>
+
+            <div class="charts-section" id="orgChartsSection">
+                <div id="orgErrorMessage"></div>
+                <div class="chart-container">
+                    <canvas id="orgChart"></canvas>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Minutes</div>
+                        <div class="stat-value" id="orgTotalMinutes">0</div>
+                        <div class="stat-detail" id="orgTotalHours"></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Avg Daily Minutes</div>
+                        <div class="stat-value" id="orgAvgDaily">0</div>
+                        <div class="stat-detail">minutes per active day</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Active Days</div>
+                        <div class="stat-value" id="orgActiveDays">0</div>
+                        <div class="stat-detail" id="orgActiveDaysDetail"></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Peak Day</div>
+                        <div class="stat-value" id="orgPeakDay">0</div>
+                        <div class="stat-detail" id="orgPeakDayDate"></div>
+                    </div>
+                </div>
+
+                <div class="member-table-section">
+                    <div class="member-table-title">Member Breakdown</div>
+                    <table class="member-table" id="orgMemberTable">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Total Minutes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orgMemberTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="empty-state" id="orgEmptyState">
+                <div class="empty-state-icon">🏢</div>
+                <div class="empty-state-text">Search for an organization</div>
+                <div class="empty-state-subtext">Enter an organization name, ID, or member email to begin</div>
+            </div>
+
+            <div class="data-refresh-note" id="orgDataNote"></div>
+        </div>
     </main>
 
     <script>
         // ─── Global State ───
         let usageData = [];
-        let userIndex = [];       // {e, u, c} unique users
-        let currentSuggestions = []; // filtered suggestions currently shown
-        let chart = null;
-        let currentUser = null;   // {e, u, c}
-        let latestDate = null;    // Date object
-        let earliestDate = null;  // Date object
+        let orgData = [];
+        let userIndex = [];
+        let orgIndex = [];
+        let currentChart = null;
+        let latestDate = null;
+        let earliestDate = null;
+        let currentTab = 'user';
+        let currentUser = null;
+        let currentOrg = null;
 
         // ─── Startup ───
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 await loadData();
-                initUI();
+                initTabs();
+                initUserTab();
+                initOrgTab();
             } catch (err) {
                 console.error(err);
-                document.getElementById('emptyState').innerHTML =
-                    '<div class="error-message">Failed to load usage_data.json. Make sure it is in the same folder as this HTML file.</div>';
+                const msg = 'Failed to load data files. Ensure usage_data.json and org_data.json are in the same folder.';
+                document.getElementById('userEmptyState').innerHTML =
+                    '<div class="error-message">' + esc(msg) + '</div>';
             }
         });
 
-        // ─── Data Loading & Indexing ───
+        // ─── Data Loading ───
         async function loadData() {
-            const resp = await fetch('./usage_data.json');
-            if (!resp.ok) throw new Error('Fetch failed');
-            usageData = await resp.json();
+            const usageResp = await fetch('./usage_data.json');
+            if (!usageResp.ok) throw new Error('Failed to load usage_data.json');
+            usageData = await usageResp.json();
 
-            // Find date range
+            const orgResp = await fetch('./org_data.json');
+            if (!orgResp.ok) throw new Error('Failed to load org_data.json');
+            orgData = await orgResp.json();
+
+            // Build user index
             let minD = '9999-99-99', maxD = '0000-00-00';
             const userMap = new Map();
-
             for (const r of usageData) {
                 if (r.d < minD) minD = r.d;
                 if (r.d > maxD) maxD = r.d;
-
-                const key = r.e; // email is unique identifier
+                const key = r.e;
                 if (!userMap.has(key)) {
                     userMap.set(key, { e: r.e, u: r.u, c: r.c });
                 }
             }
-
             latestDate = parseDate(maxD);
             earliestDate = parseDate(minD);
             userIndex = Array.from(userMap.values());
 
-            document.getElementById('dataNote').textContent =
+            // Build org index
+            const orgMap = new Map();
+            for (const r of orgData) {
+                const key = r.oid;
+                if (!orgMap.has(key)) {
+                    orgMap.set(key, {
+                        oid: r.oid,
+                        on: r.on,
+                        members: []
+                    });
+                }
+                orgMap.get(key).members.push({
+                    uid: r.uid,
+                    role: r.role,
+                    status: r.status,
+                    e: r.e,
+                    u: r.u
+                });
+            }
+            orgIndex = Array.from(orgMap.values());
+
+            document.getElementById('userDataNote').textContent =
                 `Data: ${formatDateLong(earliestDate)} to ${formatDateLong(latestDate)} | ${usageData.length.toLocaleString()} records | ${userIndex.length.toLocaleString()} users`;
+            document.getElementById('orgDataNote').textContent =
+                `Data: ${formatDateLong(earliestDate)} to ${formatDateLong(latestDate)} | ${usageData.length.toLocaleString()} records | ${orgIndex.length.toLocaleString()} organizations`;
         }
 
-        // ─── UI Setup ───
-        function initUI() {
-            const input = document.getElementById('searchInput');
-            const acList = document.getElementById('autocompleteList');
-            const periodBtns = document.querySelectorAll('.period-btn');
+        // ─── Tab System ───
+        function initTabs() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tab = btn.dataset.tab;
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+                    currentTab = tab;
+                });
+            });
+        }
 
-            // Search input
+        // ─── USER TAB ───
+        function initUserTab() {
+            const input = document.getElementById('userSearchInput');
+            const acList = document.getElementById('userAutocompleteList');
+            const periodBtns = document.querySelectorAll('#userTimePeriods .period-btn');
+
             input.addEventListener('input', () => {
-                showSuggestions(input.value.trim());
+                showUserSuggestions(input.value.trim());
             });
 
             input.addEventListener('keydown', (e) => {
                 if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                     e.preventDefault();
-                    navigateSuggestions(e.key === 'ArrowDown' ? 1 : -1);
+                    navigateSuggestions(e.key === 'ArrowDown' ? 1 : -1, acList);
                 } else if (e.key === 'Enter') {
                     e.preventDefault();
-                    handleEnter();
+                    handleUserEnter();
                 } else if (e.key === 'Escape') {
                     acList.classList.remove('visible');
                 }
             });
 
-            // Click outside closes autocomplete
             document.addEventListener('click', (e) => {
-                if (!e.target.closest('.search-input-wrapper')) {
+                if (!e.target.closest('#userSearchInput') && !e.target.closest('#userAutocompleteList')) {
                     acList.classList.remove('visible');
                 }
             });
 
-            // Period buttons
             periodBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
                     periodBtns.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
-                    if (currentUser) updateChart();
+                    if (currentUser) updateUserChart();
                 });
             });
 
-            // Clear button
-            document.getElementById('clearBtn').addEventListener('click', () => {
+            document.getElementById('userClearBtn').addEventListener('click', () => {
                 currentUser = null;
                 input.value = '';
-                document.getElementById('selectedBanner').classList.remove('visible');
-                document.getElementById('chartsSection').style.display = 'none';
-                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('userSelectedBanner').classList.remove('visible');
+                document.getElementById('userChartsSection').classList.remove('visible');
+                document.getElementById('userEmptyState').style.display = 'block';
             });
         }
 
-        // ─── Enter Key Handler ───
-        function handleEnter() {
-            const acList = document.getElementById('autocompleteList');
-            const selected = acList.querySelector('.autocomplete-item.selected');
+        let userCurrentSuggestions = [];
 
-            if (selected) {
-                // If user arrow-keyed to a suggestion, pick that one
-                const idx = parseInt(selected.dataset.index);
-                selectUser(currentSuggestions[idx]);
-            } else if (currentSuggestions.length > 0) {
-                // Pick the first suggestion
-                selectUser(currentSuggestions[0]);
-            } else {
-                // Try exact email match from typed text
-                const query = document.getElementById('searchInput').value.trim().toLowerCase();
-                if (query) {
-                    const exactMatch = userIndex.find(u => u.e.toLowerCase() === query);
-                    if (exactMatch) {
-                        selectUser(exactMatch);
-                    } else {
-                        // Fuzzy: partial match
-                        const partial = userIndex.find(u =>
-                            u.e.toLowerCase().includes(query) || u.u.toLowerCase().includes(query)
-                        );
-                        if (partial) {
-                            selectUser(partial);
-                        } else {
-                            showError('No user found matching "' + query + '"');
-                        }
-                    }
-                }
-            }
-
-            acList.classList.remove('visible');
-        }
-
-        // ─── Select a User ───
-        function selectUser(user) {
-            currentUser = user;
-            const input = document.getElementById('searchInput');
-            input.value = user.e;
-            document.getElementById('autocompleteList').classList.remove('visible');
-
-            // Update banner
-            document.getElementById('bannerEmail').textContent = user.e;
-            document.getElementById('bannerName').textContent = user.u || '(no name)';
-            document.getElementById('bannerCustomer').textContent = user.c ? 'Customer: ' + user.c : '';
-            document.getElementById('selectedBanner').classList.add('visible');
-
-            updateChart();
-        }
-
-        // ─── Autocomplete Suggestions ───
-        function showSuggestions(query) {
-            const acList = document.getElementById('autocompleteList');
+        function showUserSuggestions(query) {
+            const acList = document.getElementById('userAutocompleteList');
             if (!query) {
                 acList.classList.remove('visible');
-                currentSuggestions = [];
+                userCurrentSuggestions = [];
                 return;
             }
 
             const q = query.toLowerCase();
-            currentSuggestions = userIndex.filter(u =>
+            userCurrentSuggestions = userIndex.filter(u =>
                 u.e.toLowerCase().includes(q) ||
                 u.u.toLowerCase().includes(q) ||
                 (u.c && u.c.toLowerCase().includes(q))
             ).slice(0, 12);
 
-            if (currentSuggestions.length === 0) {
+            if (userCurrentSuggestions.length === 0) {
                 acList.classList.remove('visible');
                 return;
             }
 
-            acList.innerHTML = currentSuggestions.map((item, idx) => `
+            acList.innerHTML = userCurrentSuggestions.map((item, idx) => `
                 <div class="autocomplete-item" data-index="${idx}">
                     <div class="ac-email">${esc(item.e)}</div>
                     <div class="ac-name">${esc(item.u || '(no name)')}</div>
@@ -549,46 +756,67 @@
 
             acList.classList.add('visible');
 
-            // Click handlers
             acList.querySelectorAll('.autocomplete-item').forEach(el => {
                 el.addEventListener('click', () => {
                     const idx = parseInt(el.dataset.index);
-                    selectUser(currentSuggestions[idx]);
+                    selectUser(userCurrentSuggestions[idx]);
                 });
             });
         }
 
-        // ─── Arrow Key Navigation ───
-        function navigateSuggestions(direction) {
-            const items = document.querySelectorAll('.autocomplete-item');
-            if (items.length === 0) return;
+        function handleUserEnter() {
+            const acList = document.getElementById('userAutocompleteList');
+            const selected = acList.querySelector('.autocomplete-item.selected');
 
-            const current = document.querySelector('.autocomplete-item.selected');
-            let newIdx = 0;
-
-            if (current) {
-                const curIdx = parseInt(current.dataset.index);
-                current.classList.remove('selected');
-                newIdx = curIdx + direction;
-                if (newIdx < 0) newIdx = items.length - 1;
-                if (newIdx >= items.length) newIdx = 0;
+            if (selected) {
+                const idx = parseInt(selected.dataset.index);
+                selectUser(userCurrentSuggestions[idx]);
+            } else if (userCurrentSuggestions.length > 0) {
+                selectUser(userCurrentSuggestions[0]);
             } else {
-                newIdx = direction === 1 ? 0 : items.length - 1;
+                const query = document.getElementById('userSearchInput').value.trim().toLowerCase();
+                if (query) {
+                    const exactMatch = userIndex.find(u => u.e.toLowerCase() === query);
+                    if (exactMatch) {
+                        selectUser(exactMatch);
+                    } else {
+                        const partial = userIndex.find(u =>
+                            u.e.toLowerCase().includes(query) || u.u.toLowerCase().includes(query)
+                        );
+                        if (partial) {
+                            selectUser(partial);
+                        } else {
+                            document.getElementById('userErrorMessage').innerHTML =
+                                '<div class="error-message">No user found matching "' + esc(query) + '"</div>';
+                        }
+                    }
+                }
             }
 
-            items[newIdx].classList.add('selected');
-            items[newIdx].scrollIntoView({ block: 'nearest' });
+            acList.classList.remove('visible');
         }
 
-        // ─── Chart Update ───
-        function updateChart() {
+        function selectUser(user) {
+            currentUser = user;
+            const input = document.getElementById('userSearchInput');
+            input.value = user.e;
+            document.getElementById('userAutocompleteList').classList.remove('visible');
+
+            document.getElementById('userBannerEmail').textContent = user.e;
+            document.getElementById('userBannerName').textContent = user.u || '(no name)';
+            document.getElementById('userBannerCustomer').textContent = user.c ? 'Customer: ' + user.c : '';
+            document.getElementById('userSelectedBanner').classList.add('visible');
+
+            updateUserChart();
+        }
+
+        function updateUserChart() {
             if (!currentUser) return;
 
-            const errEl = document.getElementById('errorMessage');
+            const errEl = document.getElementById('userErrorMessage');
             errEl.innerHTML = '';
 
-            // Get selected time period
-            const activePeriod = document.querySelector('.period-btn.active').dataset.days;
+            const activePeriod = document.querySelector('#userTimePeriods .period-btn.active').dataset.days;
             let startDate;
             if (activePeriod === 'all') {
                 startDate = earliestDate;
@@ -601,33 +829,29 @@
             const startStr = dateToStr(startDate);
             const endStr = dateToStr(latestDate);
 
-            // Filter data for this user and date range
             const filtered = usageData.filter(r =>
                 r.e === currentUser.e && r.d >= startStr && r.d <= endStr
             );
 
             if (filtered.length === 0) {
-                document.getElementById('chartsSection').style.display = 'block';
-                document.getElementById('emptyState').style.display = 'none';
+                document.getElementById('userChartsSection').classList.add('visible');
+                document.getElementById('userEmptyState').style.display = 'none';
                 errEl.innerHTML = '<div class="no-data-message">No usage data in this time period for this user.</div>';
-                if (chart) chart.destroy();
-                chart = null;
-                // Zero out stats
-                ['totalMinutes','avgDaily','activeDays','peakDay'].forEach(id =>
+                if (currentChart) currentChart.destroy();
+                currentChart = null;
+                ['userTotalMinutes','userAvgDaily','userActiveDays','userPeakDay'].forEach(id =>
                     document.getElementById(id).textContent = '0');
-                document.getElementById('totalHours').textContent = '';
-                document.getElementById('activeDaysDetail').textContent = '';
-                document.getElementById('peakDayDate').textContent = '';
+                document.getElementById('userTotalHours').textContent = '';
+                document.getElementById('userActiveDaysDetail').textContent = '';
+                document.getElementById('userPeakDayDate').textContent = '';
                 return;
             }
 
-            // Build daily aggregation (fill missing days with 0)
             const dailyMap = new Map();
             for (const r of filtered) {
                 dailyMap.set(r.d, (dailyMap.get(r.d) || 0) + r.m);
             }
 
-            // Generate all dates in range
             const allDates = [];
             const allValues = [];
             const cursor = new Date(startDate);
@@ -642,26 +866,19 @@
                 cursor.setDate(cursor.getDate() + 1);
             }
 
-            // Determine if short period (<=30 days) or long
             const totalDays = allDates.length;
             const isShort = totalDays <= 60;
 
-            // Format labels
             const labels = allDates.map(d => {
                 const dt = parseDate(d);
-                if (isShort) {
-                    return formatDateShort(dt); // DD-MMM-YYYY
-                } else {
-                    return formatDateMonth(dt); // MMM-YYYY
-                }
+                return isShort ? formatDateShort(dt) : formatDateMonth(dt);
             });
 
-            // If long period, aggregate by month
             let chartLabels, chartData;
             if (!isShort) {
                 const monthMap = new Map();
                 for (let i = 0; i < allDates.length; i++) {
-                    const monthKey = allDates[i].substring(0, 7); // YYYY-MM
+                    const monthKey = allDates[i].substring(0, 7);
                     monthMap.set(monthKey, (monthMap.get(monthKey) || 0) + allValues[i]);
                 }
                 chartLabels = Array.from(monthMap.keys()).map(ym => {
@@ -675,31 +892,348 @@
                 chartData = allValues;
             }
 
-            renderChart(chartLabels, chartData, isShort);
-            updateStats(filtered, dailyMap, totalDays);
+            renderChart(chartLabels, chartData, isShort, 'user');
+            updateUserStats(filtered, dailyMap, totalDays);
 
-            document.getElementById('chartsSection').style.display = 'block';
-            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('userChartsSection').classList.add('visible');
+            document.getElementById('userEmptyState').style.display = 'none';
         }
 
-        // ─── Render Chart ───
-        function renderChart(labels, data, isShort) {
-            const ctx = document.getElementById('usageChart').getContext('2d');
-            if (chart) chart.destroy();
+        function updateUserStats(data, dailyMap, totalDaysInRange) {
+            const totalMin = data.reduce((s, r) => s + r.m, 0);
+            const activeDays = dailyMap.size;
+            const avgDaily = activeDays > 0 ? totalMin / activeDays : 0;
+
+            let peakMin = 0, peakDate = '';
+            dailyMap.forEach((mins, date) => {
+                if (mins > peakMin) { peakMin = mins; peakDate = date; }
+            });
+
+            document.getElementById('userTotalMinutes').textContent = Math.round(totalMin).toLocaleString();
+            document.getElementById('userTotalHours').textContent = (totalMin / 60).toFixed(1) + ' hours';
+            document.getElementById('userAvgDaily').textContent = Math.round(avgDaily).toLocaleString();
+            document.getElementById('userActiveDays').textContent = activeDays;
+            document.getElementById('userActiveDaysDetail').textContent =
+                'out of ' + totalDaysInRange + ' days in range';
+            document.getElementById('userPeakDay').textContent = Math.round(peakMin).toLocaleString() + ' min';
+            document.getElementById('userPeakDayDate').textContent = peakDate
+                ? formatDateLong(parseDate(peakDate))
+                : 'N/A';
+        }
+
+        // ─── ORG TAB ───
+        function initOrgTab() {
+            const input = document.getElementById('orgSearchInput');
+            const acList = document.getElementById('orgAutocompleteList');
+            const periodBtns = document.querySelectorAll('#orgTimePeriods .period-btn');
+
+            input.addEventListener('input', () => {
+                showOrgSuggestions(input.value.trim());
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    navigateSuggestions(e.key === 'ArrowDown' ? 1 : -1, acList);
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleOrgEnter();
+                } else if (e.key === 'Escape') {
+                    acList.classList.remove('visible');
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#orgSearchInput') && !e.target.closest('#orgAutocompleteList')) {
+                    acList.classList.remove('visible');
+                }
+            });
+
+            periodBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    periodBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    if (currentOrg) updateOrgChart();
+                });
+            });
+
+            document.getElementById('orgClearBtn').addEventListener('click', () => {
+                currentOrg = null;
+                input.value = '';
+                document.getElementById('orgSelectedBanner').classList.remove('visible');
+                document.getElementById('orgChartsSection').classList.remove('visible');
+                document.getElementById('orgEmptyState').style.display = 'block';
+            });
+        }
+
+        let orgCurrentSuggestions = [];
+
+        function showOrgSuggestions(query) {
+            const acList = document.getElementById('orgAutocompleteList');
+            if (!query) {
+                acList.classList.remove('visible');
+                orgCurrentSuggestions = [];
+                return;
+            }
+
+            const q = query.trim();
+            const isNumeric = /^\d+$/.test(q);
+
+            let matches;
+            if (isNumeric) {
+                const oid = parseInt(q);
+                matches = orgIndex.filter(org => org.oid === oid);
+            } else {
+                const qLower = q.toLowerCase();
+                matches = orgIndex.filter(org => {
+                    const nameMatch = org.on.toLowerCase().includes(qLower);
+                    const memberMatch = org.members.some(m =>
+                        m.e.toLowerCase().includes(qLower) || m.u.toLowerCase().includes(qLower)
+                    );
+                    return nameMatch || memberMatch;
+                });
+            }
+
+            orgCurrentSuggestions = matches.slice(0, 12);
+
+            if (orgCurrentSuggestions.length === 0) {
+                acList.classList.remove('visible');
+                return;
+            }
+
+            // Auto-select if exactly 1 match
+            if (orgCurrentSuggestions.length === 1) {
+                selectOrg(orgCurrentSuggestions[0]);
+                acList.classList.remove('visible');
+                return;
+            }
+
+            acList.innerHTML = orgCurrentSuggestions.map((item, idx) => `
+                <div class="autocomplete-item" data-index="${idx}">
+                    <div class="ac-email">${esc(item.on)}</div>
+                    <div class="ac-org-info">ID: ${item.oid} | ${item.members.length} member${item.members.length !== 1 ? 's' : ''}</div>
+                </div>
+            `).join('');
+
+            acList.classList.add('visible');
+
+            acList.querySelectorAll('.autocomplete-item').forEach(el => {
+                el.addEventListener('click', () => {
+                    const idx = parseInt(el.dataset.index);
+                    selectOrg(orgCurrentSuggestions[idx]);
+                });
+            });
+        }
+
+        function handleOrgEnter() {
+            const acList = document.getElementById('orgAutocompleteList');
+            const selected = acList.querySelector('.autocomplete-item.selected');
+
+            if (selected) {
+                const idx = parseInt(selected.dataset.index);
+                selectOrg(orgCurrentSuggestions[idx]);
+            } else if (orgCurrentSuggestions.length > 0) {
+                selectOrg(orgCurrentSuggestions[0]);
+            } else {
+                const q = document.getElementById('orgSearchInput').value.trim();
+                if (q) {
+                    document.getElementById('orgErrorMessage').innerHTML =
+                        '<div class="error-message">No organization found matching "' + esc(q) + '"</div>';
+                }
+            }
+
+            acList.classList.remove('visible');
+        }
+
+        function selectOrg(org) {
+            currentOrg = org;
+            const input = document.getElementById('orgSearchInput');
+            input.value = org.on;
+            document.getElementById('orgAutocompleteList').classList.remove('visible');
+
+            const activeMembers = org.members.filter(m => m.status === 'active').length;
+            const totalMembers = org.members.length;
+
+            document.getElementById('orgBannerName').textContent = org.on;
+            document.getElementById('orgBannerOid').textContent = 'ID: ' + org.oid;
+            document.getElementById('orgBannerMembers').textContent =
+                activeMembers + ' active / ' + totalMembers + ' total members';
+            document.getElementById('orgSelectedBanner').classList.add('visible');
+
+            updateOrgChart();
+        }
+
+        function updateOrgChart() {
+            if (!currentOrg) return;
+
+            const errEl = document.getElementById('orgErrorMessage');
+            errEl.innerHTML = '';
+
+            const activePeriod = document.querySelector('#orgTimePeriods .period-btn.active').dataset.days;
+            let startDate;
+            if (activePeriod === 'all') {
+                startDate = earliestDate;
+            } else {
+                const days = parseInt(activePeriod);
+                startDate = new Date(latestDate);
+                startDate.setDate(startDate.getDate() - days);
+            }
+
+            const startStr = dateToStr(startDate);
+            const endStr = dateToStr(latestDate);
+
+            // Get all emails in this org
+            const orgEmails = new Set(currentOrg.members.map(m => m.e));
+
+            // Filter usage data for all members in this org
+            const filtered = usageData.filter(r =>
+                orgEmails.has(r.e) && r.d >= startStr && r.d <= endStr
+            );
+
+            if (filtered.length === 0) {
+                document.getElementById('orgChartsSection').classList.add('visible');
+                document.getElementById('orgEmptyState').style.display = 'none';
+                errEl.innerHTML = '<div class="no-data-message">No usage data in this time period for this organization.</div>';
+                if (currentChart) currentChart.destroy();
+                currentChart = null;
+                ['orgTotalMinutes','orgAvgDaily','orgActiveDays','orgPeakDay'].forEach(id =>
+                    document.getElementById(id).textContent = '0');
+                document.getElementById('orgTotalHours').textContent = '';
+                document.getElementById('orgActiveDaysDetail').textContent = '';
+                document.getElementById('orgPeakDayDate').textContent = '';
+                document.getElementById('orgMemberTableBody').innerHTML = '';
+                return;
+            }
+
+            // Aggregate by day across all members
+            const dailyMap = new Map();
+            for (const r of filtered) {
+                dailyMap.set(r.d, (dailyMap.get(r.d) || 0) + r.m);
+            }
+
+            const allDates = [];
+            const allValues = [];
+            const cursor = new Date(startDate);
+            cursor.setHours(0,0,0,0);
+            const end = new Date(latestDate);
+            end.setHours(0,0,0,0);
+
+            while (cursor <= end) {
+                const ds = dateToStr(cursor);
+                allDates.push(ds);
+                allValues.push(Math.round((dailyMap.get(ds) || 0) * 100) / 100);
+                cursor.setDate(cursor.getDate() + 1);
+            }
+
+            const totalDays = allDates.length;
+            const isShort = totalDays <= 60;
+
+            const labels = allDates.map(d => {
+                const dt = parseDate(d);
+                return isShort ? formatDateShort(dt) : formatDateMonth(dt);
+            });
+
+            let chartLabels, chartData;
+            if (!isShort) {
+                const monthMap = new Map();
+                for (let i = 0; i < allDates.length; i++) {
+                    const monthKey = allDates[i].substring(0, 7);
+                    monthMap.set(monthKey, (monthMap.get(monthKey) || 0) + allValues[i]);
+                }
+                chartLabels = Array.from(monthMap.keys()).map(ym => {
+                    const [y, m] = ym.split('-');
+                    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                    return months[parseInt(m)-1] + '-' + y;
+                });
+                chartData = Array.from(monthMap.values()).map(v => Math.round(v * 100) / 100);
+            } else {
+                chartLabels = labels;
+                chartData = allValues;
+            }
+
+            renderChart(chartLabels, chartData, isShort, 'org');
+            updateOrgStats(filtered, dailyMap, totalDays);
+            updateOrgMemberTable(filtered);
+
+            document.getElementById('orgChartsSection').classList.add('visible');
+            document.getElementById('orgEmptyState').style.display = 'none';
+        }
+
+        function updateOrgStats(data, dailyMap, totalDaysInRange) {
+            const totalMin = data.reduce((s, r) => s + r.m, 0);
+            const activeDays = dailyMap.size;
+            const avgDaily = activeDays > 0 ? totalMin / activeDays : 0;
+
+            let peakMin = 0, peakDate = '';
+            dailyMap.forEach((mins, date) => {
+                if (mins > peakMin) { peakMin = mins; peakDate = date; }
+            });
+
+            document.getElementById('orgTotalMinutes').textContent = Math.round(totalMin).toLocaleString();
+            document.getElementById('orgTotalHours').textContent = (totalMin / 60).toFixed(1) + ' hours';
+            document.getElementById('orgAvgDaily').textContent = Math.round(avgDaily).toLocaleString();
+            document.getElementById('orgActiveDays').textContent = activeDays;
+            document.getElementById('orgActiveDaysDetail').textContent =
+                'out of ' + totalDaysInRange + ' days in range';
+            document.getElementById('orgPeakDay').textContent = Math.round(peakMin).toLocaleString() + ' min';
+            document.getElementById('orgPeakDayDate').textContent = peakDate
+                ? formatDateLong(parseDate(peakDate))
+                : 'N/A';
+        }
+
+        function updateOrgMemberTable(filtered) {
+            // Build member usage summary
+            const memberUsage = new Map();
+            for (const r of filtered) {
+                if (!memberUsage.has(r.e)) {
+                    memberUsage.set(r.e, { minutes: 0 });
+                }
+                memberUsage.get(r.e).minutes += r.m;
+            }
+
+            // Get member info from org data and sort by total minutes desc
+            const rows = currentOrg.members.map(member => {
+                const usage = memberUsage.get(member.e) || { minutes: 0 };
+                return {
+                    username: member.u,
+                    email: member.e,
+                    role: member.role,
+                    status: member.status,
+                    minutes: usage.minutes
+                };
+            }).sort((a, b) => b.minutes - a.minutes);
+
+            const tbody = document.getElementById('orgMemberTableBody');
+            tbody.innerHTML = rows.map(row => `
+                <tr class="${row.status === 'removed' ? 'removed' : ''}">
+                    <td>${esc(row.username)}</td>
+                    <td>${esc(row.email)}</td>
+                    <td>${esc(row.role)}</td>
+                    <td><span class="member-status ${row.status}">${esc(row.status)}</span></td>
+                    <td>${Math.round(row.minutes).toLocaleString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        // ─── Shared Chart Rendering ───
+        function renderChart(labels, data, isShort, tab) {
+            const chartId = tab === 'user' ? 'userChart' : 'orgChart';
+            const ctx = document.getElementById(chartId).getContext('2d');
+            if (currentChart) currentChart.destroy();
 
             const yLabel = isShort ? 'Minutes per Day' : 'Minutes per Month';
             const xLabel = isShort ? 'Date' : 'Month';
 
-            chart = new Chart(ctx, {
-                type: isShort ? 'bar' : 'bar',
+            currentChart = new Chart(ctx, {
+                type: 'bar',
                 data: {
                     labels,
                     datasets: [{
                         label: 'Usage (minutes)',
                         data,
                         borderColor: '#2563eb',
-                        backgroundColor: isShort ? 'rgba(37, 99, 235, 0.7)' : 'rgba(37, 99, 235, 0.7)',
-                        borderWidth: isShort ? 0 : 0,
+                        backgroundColor: 'rgba(37, 99, 235, 0.7)',
+                        borderWidth: 0,
                         borderRadius: 3,
                         fill: true,
                         tension: 0.3,
@@ -776,30 +1310,28 @@
             });
         }
 
-        // ─── Stats ───
-        function updateStats(data, dailyMap, totalDaysInRange) {
-            const totalMin = data.reduce((s, r) => s + r.m, 0);
-            const activeDays = dailyMap.size;
-            const avgDaily = activeDays > 0 ? totalMin / activeDays : 0;
+        // ─── Helpers ───
+        function navigateSuggestions(direction, acList) {
+            const items = acList.querySelectorAll('.autocomplete-item');
+            if (items.length === 0) return;
 
-            let peakMin = 0, peakDate = '';
-            dailyMap.forEach((mins, date) => {
-                if (mins > peakMin) { peakMin = mins; peakDate = date; }
-            });
+            const current = acList.querySelector('.autocomplete-item.selected');
+            let newIdx = 0;
 
-            document.getElementById('totalMinutes').textContent = Math.round(totalMin).toLocaleString();
-            document.getElementById('totalHours').textContent = (totalMin / 60).toFixed(1) + ' hours';
-            document.getElementById('avgDaily').textContent = Math.round(avgDaily).toLocaleString();
-            document.getElementById('activeDays').textContent = activeDays;
-            document.getElementById('activeDaysDetail').textContent =
-                'out of ' + totalDaysInRange + ' days in range';
-            document.getElementById('peakDay').textContent = Math.round(peakMin).toLocaleString() + ' min';
-            document.getElementById('peakDayDate').textContent = peakDate
-                ? formatDateLong(parseDate(peakDate))
-                : 'N/A';
+            if (current) {
+                const curIdx = parseInt(current.dataset.index);
+                current.classList.remove('selected');
+                newIdx = curIdx + direction;
+                if (newIdx < 0) newIdx = items.length - 1;
+                if (newIdx >= items.length) newIdx = 0;
+            } else {
+                newIdx = direction === 1 ? 0 : items.length - 1;
+            }
+
+            items[newIdx].classList.add('selected');
+            items[newIdx].scrollIntoView({ block: 'nearest' });
         }
 
-        // ─── Helpers ───
         function parseDate(str) {
             const [y, m, d] = str.split('-').map(Number);
             return new Date(y, m - 1, d);
@@ -815,12 +1347,10 @@
         const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
         function formatDateShort(dt) {
-            // DD-MMM-YYYY
             return dt.getDate().toString().padStart(2, '0') + '-' + MONTHS[dt.getMonth()] + '-' + dt.getFullYear();
         }
 
         function formatDateMonth(dt) {
-            // MMM-YYYY
             return MONTHS[dt.getMonth()] + '-' + dt.getFullYear();
         }
 
@@ -828,20 +1358,10 @@
             return dt.getDate() + ' ' + MONTHS[dt.getMonth()] + ' ' + dt.getFullYear();
         }
 
-        function showError(msg) {
-            document.getElementById('errorMessage').innerHTML =
-                '<div class="error-message">' + esc(msg) + '</div>';
-        }
-
         function esc(text) {
             const d = document.createElement('div');
             d.textContent = text || '';
             return d.innerHTML;
-        }
-
-        function resetDisplay() {
-            document.getElementById('chartsSection').style.display = 'none';
-            document.getElementById('emptyState').style.display = 'block';
         }
     </script>
 </body>
