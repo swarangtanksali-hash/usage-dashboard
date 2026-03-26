@@ -514,377 +514,480 @@
     </div>
 
     <script>
-        // Global variables
-        let userIndex = {};
-        let orgIndex = {};
-        let subIndex = {};
-        let selectedUser = null;
-        let selectedOrg = null;
-        let selectedPeriod = 7;
-        let userChart = null;
-        let orgChart = null;
+        // ─── Global State ───
+        let usageData = [];      // raw array: {e, u, d, m, c}
+        let orgMembers = [];     // raw array: {oid, on, uid, role, status, e, u}
+        let subData = [];        // raw array: {oid, plan, licenses, active, status, billing, start, end}
+        let userIndex = [];      // unique users: {e, u, c}
+        let orgIndex = [];       // orgs: {oid, on, members:[{uid, role, status, e, u}]}
+        let subIndex = new Map();// oid → active subscription
+        let selectedUser = null; // {e, u, c}
+        let selectedOrg = null;  // {oid, on, members}
+        let userChartObj = null;
+        let orgChartObj = null;
+        let latestDate = null;
+        let earliestDate = null;
 
-        // Initialize on DOM load
-        document.addEventListener('DOMContentLoaded', function() {
-            setupTabs();
-            setupSearchAutocomplete();
-            setupPeriodButtons();
-            loadData();
+        const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+        // ─── Init ───
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await loadAllData();
+                setupTabs();
+                setupPeriodButtons();
+                setupUserSearch();
+                setupOrgSearch();
+            } catch (err) {
+                console.error('Init error:', err);
+                document.querySelector('.main-content').innerHTML =
+                    '<div class="no-data" style="color:red;">Failed to load data. Ensure usage_data.json, org_data.json, and sub_data.json are in the same folder.</div>';
+            }
         });
 
-        // Tab switching
+        // ─── Data Loading ───
+        async function loadAllData() {
+            const [usageResp, orgResp, subResp] = await Promise.all([
+                fetch('./usage_data.json'),
+                fetch('./org_data.json'),
+                fetch('./sub_data.json')
+            ]);
+            usageData = await usageResp.json();
+            orgMembers = await orgResp.json();
+            subData = await subResp.json();
+
+            // Date range
+            let minD = '9999', maxD = '0000';
+            const uMap = new Map();
+            for (const r of usageData) {
+                if (r.d < minD) minD = r.d;
+                if (r.d > maxD) maxD = r.d;
+                if (!uMap.has(r.e)) uMap.set(r.e, { e: r.e, u: r.u, c: r.c });
+            }
+            latestDate = parseDate(maxD);
+            earliestDate = parseDate(minD);
+            userIndex = Array.from(uMap.values());
+
+            // Org index
+            const oMap = new Map();
+            for (const r of orgMembers) {
+                if (!oMap.has(r.oid)) oMap.set(r.oid, { oid: r.oid, on: r.on, members: [] });
+                oMap.get(r.oid).members.push({ uid: r.uid, role: r.role, status: r.status, e: r.e, u: r.u });
+            }
+            orgIndex = Array.from(oMap.values());
+
+            // Sub index: keep only active subscription per org (latest)
+            for (const s of subData) {
+                if (s.active && s.status === 'active') {
+                    const existing = subIndex.get(s.oid);
+                    if (!existing || s.start > existing.start) {
+                        subIndex.set(s.oid, s);
+                    }
+                }
+            }
+        }
+
+        // ─── Tabs ───
         function setupTabs() {
-            const tabBtns = document.querySelectorAll('.tab-btn');
-            tabBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const tab = this.getAttribute('data-tab');
-                    switchTab(tab);
-                });
-            });
-        }
-
-        function switchTab(tab) {
-            // Update buttons
             document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.querySelector(`[data-tab="${tab}"].tab-btn`).classList.add('active');
-
-            // Update content
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.querySelector(`[data-tab="${tab}"].tab-content`).classList.add('active');
-
-            // Reset state
-            selectedUser = null;
-            selectedOrg = null;
-
-            // Refresh chart
-            if (tab === 'user') {
-                updateUserChart();
-            } else {
-                updateOrgChart();
-            }
-        }
-
-        // Search and autocomplete
-        function setupSearchAutocomplete() {
-            const userSearchInput = document.getElementById('userSearch');
-            const userAutocomplete = document.getElementById('userAutocomplete');
-            const orgSearchInput = document.getElementById('orgSearch');
-            const orgAutocomplete = document.getElementById('orgAutocomplete');
-
-            userSearchInput.addEventListener('input', function() {
-                const query = this.value.toLowerCase();
-                if (!query) {
-                    userAutocomplete.classList.remove('active');
-                    return;
-                }
-                const matches = Object.keys(userIndex).filter(key =>
-                    key.toLowerCase().includes(query)
-                );
-                populateAutocomplete(userAutocomplete, matches, 'user');
-            });
-
-            orgSearchInput.addEventListener('input', function() {
-                const query = this.value.toLowerCase();
-                if (!query) {
-                    orgAutocomplete.classList.remove('active');
-                    return;
-                }
-                const matches = Object.keys(orgIndex).filter(key =>
-                    key.toLowerCase().includes(query)
-                );
-                populateAutocomplete(orgAutocomplete, matches, 'org');
-            });
-
-            // Close autocomplete when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.search-container')) {
-                    userAutocomplete.classList.remove('active');
-                    orgAutocomplete.classList.remove('active');
-                }
-            });
-        }
-
-        function populateAutocomplete(container, items, type) {
-            container.innerHTML = '';
-            if (items.length === 0) {
-                container.classList.remove('active');
-                return;
-            }
-            items.slice(0, 10).forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'autocomplete-item';
-                div.textContent = item;
-                div.addEventListener('click', function() {
-                    if (type === 'user') {
-                        selectedUser = item;
-                        document.getElementById('userSearch').value = item;
-                        updateUserChart();
-                    } else {
-                        selectedOrg = item;
-                        document.getElementById('orgSearch').value = item;
-                        updateOrgChart();
-                    }
-                    container.classList.remove('active');
+                btn.addEventListener('click', () => {
+                    const tab = btn.dataset.tab;
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.querySelector(`.tab-content[data-tab="${tab}"]`).classList.add('active');
                 });
-                container.appendChild(div);
             });
-            container.classList.add('active');
         }
 
-        // Period buttons
+        // ─── Period Buttons ───
         function setupPeriodButtons() {
-            const periodBtns = document.querySelectorAll('.period-btn');
-            periodBtns.forEach(btn => {
+            document.querySelectorAll('.period-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    selectedPeriod = parseInt(this.getAttribute('data-period'));
-                    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+                    // Only toggle within same tab
+                    const tabContent = this.closest('.tab-content');
+                    tabContent.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
-                    if (document.querySelector('.tab-content.active').getAttribute('data-tab') === 'user') {
-                        updateUserChart();
-                    } else {
-                        updateOrgChart();
-                    }
+                    const tab = tabContent.dataset.tab;
+                    if (tab === 'user' && selectedUser) updateUserChart();
+                    if (tab === 'org' && selectedOrg) updateOrgChart();
                 });
             });
         }
 
-        // Load data from JSON files
-        async function loadData() {
-            try {
-                const usageResponse = await fetch('./usage_data.json');
-                const usageData = await usageResponse.json();
+        // ─── User Search ───
+        function setupUserSearch() {
+            const input = document.getElementById('userSearch');
+            const acList = document.getElementById('userAutocomplete');
+            let suggestions = [];
 
-                const orgResponse = await fetch('./org_data.json');
-                const orgData = await orgResponse.json();
+            input.addEventListener('input', () => {
+                const q = input.value.trim().toLowerCase();
+                if (!q) { acList.classList.remove('active'); suggestions = []; return; }
+                suggestions = userIndex.filter(u =>
+                    u.e.toLowerCase().includes(q) || u.u.toLowerCase().includes(q)
+                ).slice(0, 12);
+                renderUserSuggestions(acList, suggestions);
+            });
 
-                const subResponse = await fetch('./sub_data.json');
-                const subData = await subResponse.json();
-
-                // Index users
-                if (usageData.users) {
-                    usageData.users.forEach(user => {
-                        userIndex[user.name] = user;
-                    });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const sel = acList.querySelector('.autocomplete-item.selected');
+                    if (sel) { pickUser(suggestions[parseInt(sel.dataset.idx)]); }
+                    else if (suggestions.length > 0) { pickUser(suggestions[0]); }
+                    else {
+                        const q = input.value.trim().toLowerCase();
+                        const match = userIndex.find(u => u.e.toLowerCase() === q) ||
+                                      userIndex.find(u => u.e.toLowerCase().includes(q) || u.u.toLowerCase().includes(q));
+                        if (match) pickUser(match);
+                    }
+                    acList.classList.remove('active');
+                } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    navAC(acList, e.key === 'ArrowDown' ? 1 : -1);
+                } else if (e.key === 'Escape') {
+                    acList.classList.remove('active');
                 }
+            });
 
-                // Index organizations
-                if (orgData.organizations) {
-                    orgData.organizations.forEach(org => {
-                        orgIndex[org.name] = org;
-                    });
-                }
-
-                // Index subscriptions by organization ID
-                if (subData.subscriptions) {
-                    subData.subscriptions.forEach(sub => {
-                        subIndex[sub.oid] = sub;
-                    });
-                }
-
-                // Initialize charts
-                updateUserChart();
-                updateOrgChart();
-            } catch (error) {
-                console.error('Error loading data:', error);
-            }
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#userSearch') && !e.target.closest('#userAutocomplete'))
+                    acList.classList.remove('active');
+            });
         }
 
-        // Chart rendering
-        function updateUserChart() {
-            const banner = document.getElementById('userBanner');
-            const chartContainer = document.getElementById('userChart');
-
-            if (!selectedUser || !userIndex[selectedUser]) {
-                banner.style.display = 'none';
-                document.getElementById('totalUsageStat').textContent = '0';
-                document.getElementById('avgDailyStat').textContent = '0';
-                document.getElementById('peakDayStat').textContent = '0';
-                document.getElementById('activeDaysStat').textContent = '0';
-                if (userChart) userChart.destroy();
-                return;
-            }
-
-            const userData = userIndex[selectedUser];
-            banner.style.display = 'block';
-            document.getElementById('bannerUserName').textContent = userData.name;
-            document.getElementById('bannerUserEmail').textContent = userData.email || 'No email';
-
-            renderChart(userData.dailyUsage, 'user', userData);
+        function renderUserSuggestions(acList, suggestions) {
+            if (suggestions.length === 0) { acList.classList.remove('active'); return; }
+            acList.innerHTML = suggestions.map((s, i) =>
+                `<div class="autocomplete-item" data-idx="${i}">
+                    <strong>${esc(s.e)}</strong><br>
+                    <span style="color:#6b7280;font-size:0.85em">${esc(s.u || '(no name)')}</span>
+                    ${s.c ? '<span style="color:#9ca3af;font-size:0.8em;font-style:italic"> — ' + esc(s.c) + '</span>' : ''}
+                </div>`
+            ).join('');
+            acList.classList.add('active');
+            acList.querySelectorAll('.autocomplete-item').forEach(el => {
+                el.addEventListener('click', () => pickUser(suggestions[parseInt(el.dataset.idx)]));
+            });
         }
 
-        function updateOrgChart() {
-            const banner = document.getElementById('orgBanner');
-            const licenseContainer = document.getElementById('licenseStatsContainer');
-
-            if (!selectedOrg || !orgIndex[selectedOrg]) {
-                banner.style.display = 'none';
-                licenseContainer.style.display = 'none';
-                document.getElementById('orgTotalUsageStat').textContent = '0';
-                document.getElementById('orgAvgDailyStat').textContent = '0';
-                document.getElementById('orgPeakDayStat').textContent = '0';
-                document.getElementById('orgActiveDaysStat').textContent = '0';
-                document.getElementById('memberTableBody').innerHTML = '<tr><td colspan="4" class="no-data">No data available</td></tr>';
-                if (orgChart) orgChart.destroy();
-                return;
-            }
-
-            const orgData = orgIndex[selectedOrg];
-            banner.style.display = 'block';
-            document.getElementById('bannerOrgName').textContent = orgData.name;
-            document.getElementById('bannerOrgEmail').textContent = orgData.email || 'No email';
-
-            // Display subscription info in banner
-            const subInfo = subIndex[orgData.oid];
-            const subBanner = document.getElementById('orgBannerSubscription');
-            if (subInfo) {
-                subBanner.innerHTML = `<strong>Plan:</strong> ${subInfo.plan} | <strong>Billing:</strong> ${subInfo.billingInterval} | <strong>Licenses:</strong> ${subInfo.licenses}`;
-            } else {
-                subBanner.innerHTML = 'No subscription information available';
-            }
-
-            // Display license stats
-            if (subInfo) {
-                licenseContainer.style.display = 'block';
-                document.getElementById('paidLicensesStat').textContent = subInfo.licenses || '0';
-                document.getElementById('totalMembersStat').textContent = subInfo.totalMembers || '0';
-                document.getElementById('activeMembersStat').textContent = subInfo.activeMembers || '0';
-                document.getElementById('inactiveMembersStat').textContent = (subInfo.totalMembers - subInfo.activeMembers) || '0';
-            } else {
-                licenseContainer.style.display = 'none';
-            }
-
-            // Display member breakdown
-            if (orgData.members && orgData.members.length > 0) {
-                const tbody = document.getElementById('memberTableBody');
-                tbody.innerHTML = '';
-                orgData.members.forEach(member => {
-                    const tr = document.createElement('tr');
-                    const activeDays = member.dailyUsage ? Object.keys(member.dailyUsage).filter(date => member.dailyUsage[date] > 0).length : 0;
-                    tr.innerHTML = `
-                        <td>${member.name}</td>
-                        <td>${member.email}</td>
-                        <td>${member.totalUsage || 0}</td>
-                        <td>${activeDays} days with data</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
-
-            renderChart(orgData.dailyUsage, 'org', orgData);
+        function pickUser(user) {
+            selectedUser = user;
+            document.getElementById('userSearch').value = user.e;
+            document.getElementById('userAutocomplete').classList.remove('active');
+            document.getElementById('userBanner').style.display = 'block';
+            document.getElementById('bannerUserName').textContent = user.u || '(no name)';
+            document.getElementById('bannerUserEmail').textContent = user.e + (user.c ? ' | ' + user.c : '');
+            updateUserChart();
         }
 
-        function renderChart(dailyUsage, type, data) {
-            if (!dailyUsage || Object.keys(dailyUsage).length === 0) {
-                if (type === 'user') {
-                    document.getElementById('totalUsageStat').textContent = '0';
-                    document.getElementById('avgDailyStat').textContent = '0';
-                    document.getElementById('peakDayStat').textContent = '0';
-                    document.getElementById('activeDaysStat').textContent = '0';
+        // ─── Org Search ───
+        function setupOrgSearch() {
+            const input = document.getElementById('orgSearch');
+            const acList = document.getElementById('orgAutocomplete');
+            let suggestions = [];
+
+            input.addEventListener('input', () => {
+                const q = input.value.trim();
+                if (!q) { acList.classList.remove('active'); suggestions = []; return; }
+                const isNum = /^\d+$/.test(q);
+                if (isNum) {
+                    suggestions = orgIndex.filter(o => o.oid === parseInt(q));
                 } else {
-                    document.getElementById('orgTotalUsageStat').textContent = '0';
-                    document.getElementById('orgAvgDailyStat').textContent = '0';
-                    document.getElementById('orgPeakDayStat').textContent = '0';
-                    document.getElementById('orgActiveDaysStat').textContent = '0';
+                    const ql = q.toLowerCase();
+                    suggestions = orgIndex.filter(o =>
+                        o.on.toLowerCase().includes(ql) ||
+                        o.members.some(m => m.e.toLowerCase().includes(ql) || m.u.toLowerCase().includes(ql))
+                    ).slice(0, 12);
                 }
-                return;
+                renderOrgSuggestions(acList, suggestions);
+                if (suggestions.length === 1) { pickOrg(suggestions[0]); acList.classList.remove('active'); }
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const sel = acList.querySelector('.autocomplete-item.selected');
+                    if (sel) pickOrg(suggestions[parseInt(sel.dataset.idx)]);
+                    else if (suggestions.length > 0) pickOrg(suggestions[0]);
+                    acList.classList.remove('active');
+                } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    navAC(acList, e.key === 'ArrowDown' ? 1 : -1);
+                } else if (e.key === 'Escape') {
+                    acList.classList.remove('active');
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#orgSearch') && !e.target.closest('#orgAutocomplete'))
+                    acList.classList.remove('active');
+            });
+        }
+
+        function renderOrgSuggestions(acList, suggestions) {
+            if (suggestions.length === 0) { acList.classList.remove('active'); return; }
+            acList.innerHTML = suggestions.map((o, i) => {
+                const active = o.members.filter(m => m.status === 'active').length;
+                return `<div class="autocomplete-item" data-idx="${i}">
+                    <strong>${esc(o.on)}</strong> <span style="color:#6b7280;font-size:0.85em">(ID: ${o.oid})</span><br>
+                    <span style="color:#9ca3af;font-size:0.8em">${o.members.length} members (${active} active)</span>
+                </div>`;
+            }).join('');
+            acList.classList.add('active');
+            acList.querySelectorAll('.autocomplete-item').forEach(el => {
+                el.addEventListener('click', () => pickOrg(suggestions[parseInt(el.dataset.idx)]));
+            });
+        }
+
+        function pickOrg(org) {
+            selectedOrg = org;
+            document.getElementById('orgSearch').value = org.on;
+            document.getElementById('orgAutocomplete').classList.remove('active');
+
+            // Banner
+            const active = org.members.filter(m => m.status === 'active').length;
+            document.getElementById('orgBanner').style.display = 'block';
+            document.getElementById('bannerOrgName').textContent = org.on;
+            document.getElementById('bannerOrgEmail').textContent = `Org ID: ${org.oid} | ${org.members.length} members (${active} active)`;
+
+            // Subscription banner
+            const sub = subIndex.get(org.oid);
+            const subEl = document.getElementById('orgBannerSubscription');
+            if (sub) {
+                subEl.innerHTML = `<strong>Plan:</strong> ${esc(sub.plan)} | <strong>Billing:</strong> ${esc(sub.billing)} | <strong>Licenses:</strong> ${sub.licenses}`;
+            } else {
+                subEl.innerHTML = '<em>No active subscription</em>';
             }
 
-            // Get dates with actual data
-            const datesWithData = Object.keys(dailyUsage).sort();
-            const isShort = selectedPeriod <= 60;
+            // License stats
+            const licContainer = document.getElementById('licenseStatsContainer');
+            licContainer.style.display = 'block';
+            document.getElementById('paidLicensesStat').textContent = sub ? sub.licenses : 0;
+            document.getElementById('totalMembersStat').textContent = org.members.length;
+            document.getElementById('activeMembersStat').textContent = active;
+            document.getElementById('inactiveMembersStat').textContent = org.members.length - active;
 
+            updateOrgChart();
+        }
+
+        // ─── User Chart ───
+        function updateUserChart() {
+            if (!selectedUser) return;
+
+            const period = getActivePeriod('user');
+            const { startStr, endStr } = getDateRange(period);
+
+            // Filter usage for this user in range
+            const filtered = usageData.filter(r =>
+                r.e === selectedUser.e && r.d >= startStr && r.d <= endStr
+            );
+
+            const dailyMap = new Map();
+            for (const r of filtered) dailyMap.set(r.d, (dailyMap.get(r.d) || 0) + r.m);
+
+            // Build weekday dates (Mon-Fri) in range, keep zero-usage weekdays
+            const isShort = period <= 60;
             let labels, values;
 
             if (isShort) {
-                // For short periods: only show dates with actual data
-                labels = datesWithData;
-                values = datesWithData.map(date => dailyUsage[date]);
+                const weekdays = getWeekdaysInRange(startStr, endStr);
+                labels = weekdays.map(d => fmtShort(parseDate(d)));
+                values = weekdays.map(d => Math.round((dailyMap.get(d) || 0) * 100) / 100);
             } else {
-                // For long periods: aggregate by month
-                const monthlyData = {};
-                datesWithData.forEach(date => {
-                    const [year, month] = date.substring(0, 7).split('-');
-                    const monthKey = `${year}-${month}`;
-                    monthlyData[monthKey] = (monthlyData[monthKey] || 0) + dailyUsage[date];
-                });
-                labels = Object.keys(monthlyData).sort();
-                values = labels.map(month => monthlyData[month]);
+                // Monthly aggregation
+                const monthMap = new Map();
+                for (const [d, m] of dailyMap) {
+                    const mk = d.substring(0, 7);
+                    monthMap.set(mk, (monthMap.get(mk) || 0) + m);
+                }
+                const sortedMonths = Array.from(monthMap.keys()).sort();
+                labels = sortedMonths.map(ym => { const [y,m] = ym.split('-'); return MONTHS[parseInt(m)-1]+'-'+y; });
+                values = sortedMonths.map(mk => Math.round(monthMap.get(mk) * 100) / 100);
             }
 
-            // Calculate stats
-            const totalUsage = values.reduce((a, b) => a + b, 0);
-            const avgDaily = (totalUsage / values.length).toFixed(2);
-            const peakDay = Math.max(...values);
-            const activeDays = values.filter(v => v > 0).length;
+            // Stats
+            const totalMin = filtered.reduce((s, r) => s + r.m, 0);
+            const activeDays = dailyMap.size;
+            const avgDaily = activeDays > 0 ? totalMin / activeDays : 0;
+            let peakMin = 0; dailyMap.forEach(v => { if (v > peakMin) peakMin = v; });
 
-            if (type === 'user') {
-                document.getElementById('totalUsageStat').textContent = totalUsage;
-                document.getElementById('avgDailyStat').textContent = avgDaily;
-                document.getElementById('peakDayStat').textContent = peakDay;
-                document.getElementById('activeDaysStat').textContent = activeDays;
+            document.getElementById('totalUsageStat').textContent = Math.round(totalMin).toLocaleString() + ' min';
+            document.getElementById('avgDailyStat').textContent = Math.round(avgDaily).toLocaleString() + ' min';
+            document.getElementById('peakDayStat').textContent = Math.round(peakMin).toLocaleString() + ' min';
+            document.getElementById('activeDaysStat').textContent = activeDays;
 
-                if (userChart) userChart.destroy();
-                userChart = new Chart(document.getElementById('userChart'), {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Daily Usage',
-                            data: values,
-                            backgroundColor: '#2563eb',
-                            borderColor: '#1e40af',
-                            borderWidth: 1,
-                            borderRadius: 4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false }
-                        },
-                        scales: {
-                            y: { beginAtZero: true }
-                        }
-                    }
-                });
-            } else {
-                document.getElementById('orgTotalUsageStat').textContent = totalUsage;
-                document.getElementById('orgAvgDailyStat').textContent = avgDaily;
-                document.getElementById('orgPeakDayStat').textContent = peakDay;
-                document.getElementById('orgActiveDaysStat').textContent = activeDays;
-
-                if (orgChart) orgChart.destroy();
-                orgChart = new Chart(document.getElementById('orgChart'), {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Daily Usage',
-                            data: values,
-                            backgroundColor: '#2563eb',
-                            borderColor: '#1e40af',
-                            borderWidth: 1,
-                            borderRadius: 4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false }
-                        },
-                        scales: {
-                            y: { beginAtZero: true }
-                        }
-                    }
-                });
-            }
+            // Render
+            if (userChartObj) userChartObj.destroy();
+            userChartObj = new Chart(document.getElementById('userChart'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{ label: 'Usage (minutes)', data: values, backgroundColor: '#2563eb', borderColor: '#1e40af', borderWidth: 1, borderRadius: 4 }]
+                },
+                options: chartOptions(isShort ? 'Minutes per Day' : 'Minutes per Month')
+            });
         }
+
+        // ─── Org Chart ───
+        function updateOrgChart() {
+            if (!selectedOrg) return;
+
+            const period = getActivePeriod('org');
+            const { startStr, endStr } = getDateRange(period);
+
+            // Get all emails in this org
+            const memberEmails = new Set(selectedOrg.members.map(m => m.e));
+
+            // Filter usage for all org members in range
+            const filtered = usageData.filter(r =>
+                memberEmails.has(r.e) && r.d >= startStr && r.d <= endStr
+            );
+
+            // Aggregate by date
+            const dailyMap = new Map();
+            for (const r of filtered) dailyMap.set(r.d, (dailyMap.get(r.d) || 0) + r.m);
+
+            const isShort = period <= 60;
+            let labels, values;
+
+            if (isShort) {
+                const weekdays = getWeekdaysInRange(startStr, endStr);
+                labels = weekdays.map(d => fmtShort(parseDate(d)));
+                values = weekdays.map(d => Math.round((dailyMap.get(d) || 0) * 100) / 100);
+            } else {
+                const monthMap = new Map();
+                for (const [d, m] of dailyMap) {
+                    const mk = d.substring(0, 7);
+                    monthMap.set(mk, (monthMap.get(mk) || 0) + m);
+                }
+                const sortedMonths = Array.from(monthMap.keys()).sort();
+                labels = sortedMonths.map(ym => { const [y,m] = ym.split('-'); return MONTHS[parseInt(m)-1]+'-'+y; });
+                values = sortedMonths.map(mk => Math.round(monthMap.get(mk) * 100) / 100);
+            }
+
+            // Stats
+            const totalMin = filtered.reduce((s, r) => s + r.m, 0);
+            const activeDays = dailyMap.size;
+            const avgDaily = activeDays > 0 ? totalMin / activeDays : 0;
+            let peakMin = 0; dailyMap.forEach(v => { if (v > peakMin) peakMin = v; });
+
+            document.getElementById('orgTotalUsageStat').textContent = Math.round(totalMin).toLocaleString() + ' min';
+            document.getElementById('orgAvgDailyStat').textContent = Math.round(avgDaily).toLocaleString() + ' min';
+            document.getElementById('orgPeakDayStat').textContent = Math.round(peakMin).toLocaleString() + ' min';
+            document.getElementById('orgActiveDaysStat').textContent = activeDays;
+
+            // Member breakdown table
+            const memberStats = new Map();
+            for (const r of filtered) {
+                if (!memberStats.has(r.e)) memberStats.set(r.e, { min: 0, days: new Set() });
+                const ms = memberStats.get(r.e);
+                ms.min += r.m;
+                ms.days.add(r.d);
+            }
+
+            const tbody = document.getElementById('memberTableBody');
+            const rows = selectedOrg.members
+                .map(m => {
+                    const ms = memberStats.get(m.e);
+                    return { ...m, totalMin: ms ? ms.min : 0, activeDays: ms ? ms.days.size : 0 };
+                })
+                .sort((a, b) => b.totalMin - a.totalMin);
+
+            tbody.innerHTML = rows.map(m =>
+                `<tr style="${m.status !== 'active' ? 'color:#9ca3af;' : ''}">
+                    <td>${esc(m.u || '(no name)')}</td>
+                    <td>${esc(m.e)}</td>
+                    <td>${Math.round(m.totalMin).toLocaleString()} min</td>
+                    <td>${m.activeDays} days</td>
+                </tr>`
+            ).join('') || '<tr><td colspan="4" class="no-data">No usage data in this period</td></tr>';
+
+            // Render chart
+            if (orgChartObj) orgChartObj.destroy();
+            orgChartObj = new Chart(document.getElementById('orgChart'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{ label: 'Org Usage (minutes)', data: values, backgroundColor: '#2563eb', borderColor: '#1e40af', borderWidth: 1, borderRadius: 4 }]
+                },
+                options: chartOptions(isShort ? 'Minutes per Day' : 'Minutes per Month')
+            });
+        }
+
+        // ─── Helpers ───
+        function getActivePeriod(tab) {
+            const tabEl = document.querySelector(`.tab-content[data-tab="${tab}"]`);
+            return parseInt(tabEl.querySelector('.period-btn.active').dataset.period);
+        }
+
+        function getDateRange(days) {
+            const end = new Date(latestDate);
+            const start = new Date(end);
+            start.setDate(start.getDate() - days);
+            return { startStr: dToStr(start), endStr: dToStr(end) };
+        }
+
+        function getWeekdaysInRange(startStr, endStr) {
+            const dates = [];
+            const cursor = parseDate(startStr);
+            const end = parseDate(endStr);
+            while (cursor <= end) {
+                const dow = cursor.getDay();
+                if (dow !== 0 && dow !== 6) { // skip Sat(6) and Sun(0)
+                    dates.push(dToStr(cursor));
+                }
+                cursor.setDate(cursor.getDate() + 1);
+            }
+            return dates;
+        }
+
+        function parseDate(s) { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+        function dToStr(d) { return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+        function fmtShort(d) { return d.getDate().toString().padStart(2,'0')+'-'+MONTHS[d.getMonth()]; }
+
+        function chartOptions(yLabel) {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true, labels: { font: { size: 12, weight: '600' }, color: '#374151', usePointStyle: true } },
+                    tooltip: {
+                        backgroundColor: '#1f2937', titleFont: { size: 13 }, bodyFont: { size: 12 },
+                        padding: 10, cornerRadius: 6,
+                        callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' min' }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: yLabel, font: { size: 12, weight: '600' }, color: '#6b7280' },
+                        ticks: { color: '#9ca3af', callback: v => Math.round(v) + ' min' },
+                        grid: { color: 'rgba(0,0,0,0.04)' }
+                    },
+                    x: {
+                        ticks: { color: '#9ca3af', maxRotation: 45, autoSkip: true, maxTicksLimit: 20 },
+                        grid: { display: false }
+                    }
+                }
+            };
+        }
+
+        function navAC(acList, dir) {
+            const items = acList.querySelectorAll('.autocomplete-item');
+            if (!items.length) return;
+            const cur = acList.querySelector('.autocomplete-item.selected');
+            let idx = 0;
+            if (cur) { idx = parseInt(cur.dataset.idx) + dir; cur.classList.remove('selected'); }
+            else { idx = dir === 1 ? 0 : items.length - 1; }
+            if (idx < 0) idx = items.length - 1;
+            if (idx >= items.length) idx = 0;
+            items[idx].classList.add('selected');
+            items[idx].scrollIntoView({ block: 'nearest' });
+        }
+
+        function esc(t) { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
     </script>
 </body>
 </html>
