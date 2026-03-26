@@ -6,68 +6,80 @@
     <title>Usage Analytics Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #f8fafc;
-            color: #1e293b;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
         }
 
         header {
-            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
             color: white;
-            padding: 2rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            text-align: center;
         }
 
-        .header-content { max-width: 1400px; margin: 0 auto; }
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
 
-        .logo { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; }
-        .header-tagline { font-size: 0.9rem; opacity: 0.9; margin-top: 0.25rem; }
+        header p {
+            font-size: 1em;
+            opacity: 0.95;
+            letter-spacing: 0.5px;
+        }
 
-        main { max-width: 1400px; margin: 0 auto; padding: 2rem; }
-
-        /* Tab System */
         .tab-bar {
             display: flex;
-            gap: 0;
-            margin-bottom: 2rem;
-            border-bottom: 2px solid #e2e8f0;
-            background: white;
-            border-radius: 0.75rem 0.75rem 0 0;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            background: #f3f4f6;
+            border-bottom: 2px solid #e5e7eb;
         }
 
         .tab-btn {
-            padding: 1rem 1.5rem;
+            flex: 1;
+            padding: 16px;
+            text-align: center;
             background: none;
             border: none;
             cursor: pointer;
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: #64748b;
-            transition: all 0.2s;
-            position: relative;
-            border-bottom: 3px solid transparent;
-            margin-bottom: -2px;
-        }
-
-        .tab-btn:hover {
-            color: #2563eb;
+            font-size: 1em;
+            font-weight: 500;
+            color: #6b7280;
+            transition: all 0.3s ease;
         }
 
         .tab-btn.active {
+            background: white;
             color: #2563eb;
-            border-bottom-color: #2563eb;
+            border-bottom: 3px solid #2563eb;
+            margin-bottom: -2px;
         }
 
-        .search-section {
-            background: white;
-            border-radius: 0 0.75rem 0.75rem 0.75rem;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        .tab-btn:hover:not(.active) {
+            color: #374151;
+            background: #f9fafb;
+        }
+
+        .main-content {
+            padding: 40px;
         }
 
         .tab-content {
@@ -79,27 +91,17 @@
         }
 
         .search-container {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-            align-items: flex-start;
-        }
-
-        .search-input-wrapper {
-            flex: 1;
-            min-width: 200px;
+            margin-bottom: 30px;
             position: relative;
         }
 
         .search-input {
             width: 100%;
-            padding: 0.75rem 1rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 0.5rem;
-            font-size: 0.95rem;
-            transition: all 0.2s;
-            background: white;
+            padding: 14px 18px;
+            font-size: 1em;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            transition: all 0.3s ease;
         }
 
         .search-input:focus {
@@ -108,1260 +110,780 @@
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
-        .search-hint {
-            font-size: 0.75rem;
-            color: #94a3b8;
-            margin-top: 0.4rem;
-            padding-left: 0.25rem;
-        }
-
         .autocomplete-list {
             position: absolute;
             top: 100%;
             left: 0;
             right: 0;
             background: white;
-            border: 1px solid #e2e8f0;
+            border: 2px solid #2563eb;
             border-top: none;
-            border-radius: 0 0 0.5rem 0.5rem;
-            max-height: 320px;
+            border-radius: 0 0 8px 8px;
+            max-height: 300px;
             overflow-y: auto;
-            z-index: 100;
             display: none;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+            z-index: 10;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         }
 
-        .autocomplete-list.visible { display: block; }
+        .autocomplete-list.active {
+            display: block;
+        }
 
         .autocomplete-item {
-            padding: 0.6rem 1rem;
-            border-bottom: 1px solid #f1f5f9;
+            padding: 12px 18px;
             cursor: pointer;
-            transition: background 0.15s;
-            font-size: 0.875rem;
+            border-bottom: 1px solid #f3f4f6;
+            transition: background 0.2s ease;
         }
 
         .autocomplete-item:hover,
         .autocomplete-item.selected {
             background: #eff6ff;
-        }
-
-        .autocomplete-item:last-child { border-bottom: none; }
-
-        .ac-email {
-            font-weight: 600;
-            color: #1e293b;
-        }
-
-        .ac-name {
-            color: #64748b;
-            font-size: 0.8rem;
-            margin-top: 0.15rem;
-        }
-
-        .ac-customer {
-            color: #94a3b8;
-            font-size: 0.75rem;
-            margin-top: 0.1rem;
-            font-style: italic;
-        }
-
-        .ac-org-info {
-            color: #94a3b8;
-            font-size: 0.75rem;
-            margin-top: 0.1rem;
-        }
-
-        .selected-banner {
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            border-radius: 0.5rem;
-            padding: 0.75rem 1rem;
-            margin-bottom: 1rem;
-            display: none;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .selected-banner.visible {
-            display: flex;
-        }
-
-        .selected-info {
-            flex: 1;
-        }
-
-        .selected-primary {
-            font-weight: 700;
-            color: #1e40af;
-            font-size: 1rem;
-        }
-
-        .selected-secondary {
-            color: #64748b;
-            font-size: 0.85rem;
-        }
-
-        .selected-tertiary {
-            color: #94a3b8;
-            font-size: 0.8rem;
-        }
-
-        .clear-btn {
-            background: none;
-            border: 1px solid #93c5fd;
-            border-radius: 0.375rem;
             color: #2563eb;
-            padding: 0.4rem 0.75rem;
-            cursor: pointer;
-            font-size: 0.8rem;
-            font-weight: 500;
-            transition: all 0.2s;
         }
 
-        .clear-btn:hover {
-            background: #dbeafe;
-        }
-
-        .time-period-buttons {
+        .period-buttons {
             display: flex;
-            gap: 0.5rem;
+            gap: 10px;
+            margin-bottom: 30px;
             flex-wrap: wrap;
         }
 
         .period-btn {
-            padding: 0.625rem 1.25rem;
-            border: 1px solid #e2e8f0;
+            padding: 10px 18px;
+            border: 2px solid #e5e7eb;
             background: white;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            font-weight: 500;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s;
-            color: #64748b;
+            font-size: 0.95em;
+            font-weight: 500;
+            color: #6b7280;
+            transition: all 0.3s ease;
         }
 
-        .period-btn:hover { border-color: #2563eb; color: #2563eb; }
+        .period-btn:hover {
+            border-color: #2563eb;
+            color: #2563eb;
+        }
 
         .period-btn.active {
             background: #2563eb;
-            color: white;
             border-color: #2563eb;
-        }
-
-        .charts-section {
-            background: white;
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            display: none;
-        }
-
-        .charts-section.visible {
-            display: block;
+            color: white;
         }
 
         .chart-container {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 2px solid #e5e7eb;
+        }
+
+        .chart-wrapper {
             position: relative;
-            height: 420px;
-            margin-bottom: 1rem;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+
+        canvas {
+            max-height: 100%;
         }
 
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid #e2e8f0;
+            gap: 20px;
+            margin-top: 25px;
         }
 
-        .stat-card {
-            background: #f8fafc;
-            border-radius: 0.5rem;
-            padding: 1.5rem;
-            border-left: 3px solid #2563eb;
+        .stats-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
         }
 
-        .stat-label {
-            font-size: 0.8rem;
-            color: #64748b;
+        .stats-card:hover {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-color: #2563eb;
+        }
+
+        .stats-card h3 {
+            color: #6b7280;
+            font-size: 0.9em;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .stats-card .value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .license-card {
+            background: white;
+            border: 2px solid #16a34a;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .license-card:hover {
+            box-shadow: 0 10px 25px rgba(22, 163, 74, 0.2);
+            border-color: #15803d;
+        }
+
+        .license-card h3 {
+            color: #6b7280;
+            font-size: 0.9em;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .license-card .value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #16a34a;
+        }
+
+        .org-info {
+            background: #f0fdf4;
+            border: 2px solid #16a34a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .org-info-text {
+            color: #166534;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .org-info-text strong {
+            color: #15803d;
             font-weight: 600;
-            margin-bottom: 0.5rem;
+        }
+
+        .banner {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border: 2px solid #2563eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            color: #1e40af;
+        }
+
+        .banner h2 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .banner p {
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .members-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .members-table thead {
+            background: #f3f4f6;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .members-table th {
+            padding: 14px;
+            text-align: left;
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 0.9em;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        .stat-value { font-size: 1.75rem; font-weight: 700; color: #1e293b; }
-        .stat-detail { font-size: 0.75rem; color: #94a3b8; margin-top: 0.5rem; }
-
-        /* Member Table */
-        .member-table-section {
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid #e2e8f0;
+        .members-table td {
+            padding: 14px;
+            border-bottom: 1px solid #e5e7eb;
         }
 
-        .member-table-title {
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 1rem;
+        .members-table tbody tr:hover {
+            background: #f9fafb;
         }
 
-        .member-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.875rem;
+        .members-table tbody tr:last-child td {
+            border-bottom: none;
         }
 
-        .member-table thead {
-            background: #f8fafc;
-            border-bottom: 2px solid #e2e8f0;
-        }
-
-        .member-table th {
-            padding: 0.75rem;
-            text-align: left;
-            font-weight: 600;
-            color: #64748b;
-        }
-
-        .member-table td {
-            padding: 0.75rem;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .member-table tbody tr:hover {
-            background: #f8fafc;
-        }
-
-        .member-table tbody tr.removed {
-            opacity: 0.6;
-            background: #f8fafc;
-        }
-
-        .member-status {
-            display: inline-block;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .member-status.active {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .member-status.removed {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .empty-state {
+        .no-data {
             text-align: center;
-            padding: 4rem 1rem;
-            color: #64748b;
-        }
-
-        .empty-state-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
-        .empty-state-text { font-size: 1.1rem; margin-bottom: 0.5rem; }
-        .empty-state-subtext { font-size: 0.875rem; color: #94a3b8; }
-
-        .no-data-message {
-            text-align: center;
-            padding: 2rem;
-            color: #94a3b8;
-            font-size: 0.95rem;
-        }
-
-        .error-message {
-            background: #fee2e2;
-            color: #dc2626;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-            border-left: 3px solid #dc2626;
-        }
-
-        .data-refresh-note {
-            text-align: center;
-            font-size: 0.75rem;
-            color: #94a3b8;
-            margin-top: 2rem;
-            padding-top: 1rem;
-            border-top: 1px solid #f1f5f9;
+            padding: 40px;
+            color: #6b7280;
+            font-size: 1.1em;
         }
 
         @media (max-width: 768px) {
-            main { padding: 1rem; }
-            .search-input-wrapper { min-width: 100%; }
-            .stats-grid { grid-template-columns: 1fr; }
-            .chart-container { height: 300px; }
-            .tab-btn { padding: 0.75rem 1rem; font-size: 0.85rem; }
-            .member-table { font-size: 0.75rem; }
-            .member-table th, .member-table td { padding: 0.5rem; }
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .tab-btn {
+                font-size: 0.9em;
+                padding: 12px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .period-buttons {
+                gap: 8px;
+            }
+
+            .period-btn {
+                padding: 8px 12px;
+                font-size: 0.85em;
+            }
         }
     </style>
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <div class="logo">Usage Analytics Dashboard</div>
-            <div class="header-tagline">Track and analyze user and organization engagement metrics | Data from Jul 2025</div>
-        </div>
-    </header>
+    <div class="container">
+        <header>
+            <h1>📊 Usage Analytics Dashboard</h1>
+            <p id="headerTagline">Data Source: BigQuery || Period: Jul '25 to date</p>
+        </header>
 
-    <main>
-        <!-- Tab Bar -->
         <div class="tab-bar">
-            <button class="tab-btn active" data-tab="user">User</button>
-            <button class="tab-btn" data-tab="organization">Organization</button>
+            <button class="tab-btn active" data-tab="user">User Analytics</button>
+            <button class="tab-btn" data-tab="org">Organization Analytics</button>
         </div>
 
-        <!-- USER TAB -->
-        <div class="tab-content active" data-tab="user">
-            <div class="search-section">
+        <div class="main-content">
+            <!-- USER TAB -->
+            <div class="tab-content active" data-tab="user">
                 <div class="search-container">
-                    <div class="search-input-wrapper">
-                        <input
-                            type="text"
-                            class="search-input"
-                            id="userSearchInput"
-                            placeholder="Paste or type a user email or name and press Enter..."
-                            autocomplete="off"
-                        >
-                        <div class="autocomplete-list" id="userAutocompleteList"></div>
-                        <div class="search-hint">Tip: Paste an email address and hit Enter for instant results</div>
-                    </div>
+                    <input type="text" id="userSearch" class="search-input" placeholder="Search for a user...">
+                    <div id="userAutocomplete" class="autocomplete-list"></div>
                 </div>
 
-                <div class="selected-banner" id="userSelectedBanner">
-                    <div class="selected-info">
-                        <div class="selected-primary" id="userBannerEmail"></div>
-                        <div class="selected-secondary" id="userBannerName"></div>
-                        <div class="selected-tertiary" id="userBannerCustomer"></div>
-                    </div>
-                    <button class="clear-btn" id="userClearBtn">Clear</button>
+                <div class="period-buttons">
+                    <button class="period-btn active" data-period="7">7 Days</button>
+                    <button class="period-btn" data-period="30">30 Days</button>
+                    <button class="period-btn" data-period="60">60 Days</button>
+                    <button class="period-btn" data-period="180">6 Months</button>
+                    <button class="period-btn" data-period="365">1 Year</button>
                 </div>
 
-                <div class="time-period-buttons" id="userTimePeriods">
-                    <button class="period-btn" data-days="7">Last 7 days</button>
-                    <button class="period-btn active" data-days="30">Last 30 days</button>
-                    <button class="period-btn" data-days="60">Last 60 days</button>
-                    <button class="period-btn" data-days="90">Last 90 days</button>
-                    <button class="period-btn" data-days="all">All time</button>
+                <div id="userBanner" class="banner" style="display: none;">
+                    <h2 id="bannerUserName"></h2>
+                    <p id="bannerUserEmail"></p>
                 </div>
-            </div>
 
-            <div class="charts-section" id="userChartsSection">
-                <div id="userErrorMessage"></div>
                 <div class="chart-container">
-                    <canvas id="userChart"></canvas>
-                </div>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-label">Total Minutes</div>
-                        <div class="stat-value" id="userTotalMinutes">0</div>
-                        <div class="stat-detail" id="userTotalHours"></div>
+                    <div class="chart-wrapper">
+                        <canvas id="userChart"></canvas>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Avg Daily Minutes</div>
-                        <div class="stat-value" id="userAvgDaily">0</div>
-                        <div class="stat-detail">minutes per active day</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Active Days</div>
-                        <div class="stat-value" id="userActiveDays">0</div>
-                        <div class="stat-detail" id="userActiveDaysDetail"></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Peak Day</div>
-                        <div class="stat-value" id="userPeakDay">0</div>
-                        <div class="stat-detail" id="userPeakDayDate"></div>
+                    <div class="stats-grid">
+                        <div class="stats-card">
+                            <h3>Total Usage</h3>
+                            <div class="value" id="totalUsageStat">0</div>
+                        </div>
+                        <div class="stats-card">
+                            <h3>Avg Daily</h3>
+                            <div class="value" id="avgDailyStat">0</div>
+                        </div>
+                        <div class="stats-card">
+                            <h3>Peak Day</h3>
+                            <div class="value" id="peakDayStat">0</div>
+                        </div>
+                        <div class="stats-card">
+                            <h3>Active Days</h3>
+                            <div class="value" id="activeDaysStat">0</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="empty-state" id="userEmptyState">
-                <div class="empty-state-icon">📊</div>
-                <div class="empty-state-text">Paste or type a user email / name and press Enter</div>
-                <div class="empty-state-subtext">View daily usage in minutes across any time range</div>
-            </div>
-
-            <div class="data-refresh-note" id="userDataNote"></div>
-        </div>
-
-        <!-- ORGANIZATION TAB -->
-        <div class="tab-content" data-tab="organization">
-            <div class="search-section">
+            <!-- ORGANIZATION TAB -->
+            <div class="tab-content" data-tab="org">
                 <div class="search-container">
-                    <div class="search-input-wrapper">
-                        <input
-                            type="text"
-                            class="search-input"
-                            id="orgSearchInput"
-                            placeholder="Search by org name, org ID, or member email..."
-                            autocomplete="off"
-                        >
-                        <div class="autocomplete-list" id="orgAutocompleteList"></div>
-                        <div class="search-hint">Tip: Enter an org ID number for exact match</div>
-                    </div>
+                    <input type="text" id="orgSearch" class="search-input" placeholder="Search for an organization...">
+                    <div id="orgAutocomplete" class="autocomplete-list"></div>
                 </div>
 
-                <div class="selected-banner" id="orgSelectedBanner">
-                    <div class="selected-info">
-                        <div class="selected-primary" id="orgBannerName"></div>
-                        <div class="selected-secondary" id="orgBannerOid"></div>
-                        <div class="selected-tertiary" id="orgBannerMembers"></div>
-                    </div>
-                    <button class="clear-btn" id="orgClearBtn">Clear</button>
+                <div class="period-buttons">
+                    <button class="period-btn active" data-period="7">7 Days</button>
+                    <button class="period-btn" data-period="30">30 Days</button>
+                    <button class="period-btn" data-period="60">60 Days</button>
+                    <button class="period-btn" data-period="180">6 Months</button>
+                    <button class="period-btn" data-period="365">1 Year</button>
                 </div>
 
-                <div class="time-period-buttons" id="orgTimePeriods">
-                    <button class="period-btn" data-days="7">Last 7 days</button>
-                    <button class="period-btn active" data-days="30">Last 30 days</button>
-                    <button class="period-btn" data-days="60">Last 60 days</button>
-                    <button class="period-btn" data-days="90">Last 90 days</button>
-                    <button class="period-btn" data-days="all">All time</button>
+                <div id="orgBanner" class="banner" style="display: none;">
+                    <h2 id="bannerOrgName"></h2>
+                    <p id="bannerOrgEmail"></p>
+                    <div id="orgBannerSubscription" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(30, 64, 175, 0.3);"></div>
                 </div>
-            </div>
 
-            <div class="charts-section" id="orgChartsSection">
-                <div id="orgErrorMessage"></div>
                 <div class="chart-container">
-                    <canvas id="orgChart"></canvas>
-                </div>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-label">Total Minutes</div>
-                        <div class="stat-value" id="orgTotalMinutes">0</div>
-                        <div class="stat-detail" id="orgTotalHours"></div>
+                    <div class="chart-wrapper">
+                        <canvas id="orgChart"></canvas>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Avg Daily Minutes</div>
-                        <div class="stat-value" id="orgAvgDaily">0</div>
-                        <div class="stat-detail">minutes per active day</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Active Days</div>
-                        <div class="stat-value" id="orgActiveDays">0</div>
-                        <div class="stat-detail" id="orgActiveDaysDetail"></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Peak Day</div>
-                        <div class="stat-value" id="orgPeakDay">0</div>
-                        <div class="stat-detail" id="orgPeakDayDate"></div>
+                    <div class="stats-grid">
+                        <div class="stats-card">
+                            <h3>Total Usage</h3>
+                            <div class="value" id="orgTotalUsageStat">0</div>
+                        </div>
+                        <div class="stats-card">
+                            <h3>Avg Daily</h3>
+                            <div class="value" id="orgAvgDailyStat">0</div>
+                        </div>
+                        <div class="stats-card">
+                            <h3>Peak Day</h3>
+                            <div class="value" id="orgPeakDayStat">0</div>
+                        </div>
+                        <div class="stats-card">
+                            <h3>Active Days</h3>
+                            <div class="value" id="orgActiveDaysStat">0</div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="member-table-section">
-                    <div class="member-table-title">Member Breakdown</div>
-                    <table class="member-table" id="orgMemberTable">
+                <div id="licenseStatsContainer" style="display: none;">
+                    <h3 style="margin-bottom: 20px; font-size: 1.1em; color: #1f2937; font-weight: 600;">License Information</h3>
+                    <div class="stats-grid">
+                        <div class="license-card">
+                            <h3>Paid Licenses</h3>
+                            <div class="value" id="paidLicensesStat">0</div>
+                        </div>
+                        <div class="license-card">
+                            <h3>Total Members</h3>
+                            <div class="value" id="totalMembersStat">0</div>
+                        </div>
+                        <div class="license-card">
+                            <h3>Active Members</h3>
+                            <div class="value" id="activeMembersStat">0</div>
+                        </div>
+                        <div class="license-card">
+                            <h3>Inactive/Removed</h3>
+                            <div class="value" id="inactiveMembersStat">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="memberBreakdown" style="margin-top: 40px;">
+                    <h3 style="margin-bottom: 20px; font-size: 1.1em; color: #1f2937; font-weight: 600;">Member Breakdown</h3>
+                    <table class="members-table">
                         <thead>
                             <tr>
-                                <th>Username</th>
+                                <th>User</th>
                                 <th>Email</th>
-                                <th>Role</th>
-                                <th>Status</th>
-                                <th>Total Minutes</th>
+                                <th>Usage</th>
+                                <th>Active Days</th>
                             </tr>
                         </thead>
-                        <tbody id="orgMemberTableBody">
+                        <tbody id="memberTableBody">
+                            <tr><td colspan="4" class="no-data">No data available</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-
-            <div class="empty-state" id="orgEmptyState">
-                <div class="empty-state-icon">🏢</div>
-                <div class="empty-state-text">Search for an organization</div>
-                <div class="empty-state-subtext">Enter an organization name, ID, or member email to begin</div>
-            </div>
-
-            <div class="data-refresh-note" id="orgDataNote"></div>
         </div>
-    </main>
+    </div>
 
     <script>
-        // ─── Global State ───
-        let usageData = [];
-        let orgData = [];
-        let userIndex = [];
-        let orgIndex = [];
-        let currentChart = null;
-        let latestDate = null;
-        let earliestDate = null;
-        let currentTab = 'user';
-        let currentUser = null;
-        let currentOrg = null;
+        // Global variables
+        let userIndex = {};
+        let orgIndex = {};
+        let subIndex = {};
+        let selectedUser = null;
+        let selectedOrg = null;
+        let selectedPeriod = 7;
+        let userChart = null;
+        let orgChart = null;
 
-        // ─── Startup ───
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                await loadData();
-                initTabs();
-                initUserTab();
-                initOrgTab();
-            } catch (err) {
-                console.error(err);
-                const msg = 'Failed to load data files. Ensure usage_data.json and org_data.json are in the same folder.';
-                document.getElementById('userEmptyState').innerHTML =
-                    '<div class="error-message">' + esc(msg) + '</div>';
-            }
+        // Initialize on DOM load
+        document.addEventListener('DOMContentLoaded', function() {
+            setupTabs();
+            setupSearchAutocomplete();
+            setupPeriodButtons();
+            loadData();
         });
 
-        // ─── Data Loading ───
-        async function loadData() {
-            const usageResp = await fetch('./usage_data.json');
-            if (!usageResp.ok) throw new Error('Failed to load usage_data.json');
-            usageData = await usageResp.json();
+        // Tab switching
+        function setupTabs() {
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const tab = this.getAttribute('data-tab');
+                    switchTab(tab);
+                });
+            });
+        }
 
-            const orgResp = await fetch('./org_data.json');
-            if (!orgResp.ok) throw new Error('Failed to load org_data.json');
-            orgData = await orgResp.json();
+        function switchTab(tab) {
+            // Update buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-tab="${tab}"].tab-btn`).classList.add('active');
 
-            // Build user index
-            let minD = '9999-99-99', maxD = '0000-00-00';
-            const userMap = new Map();
-            for (const r of usageData) {
-                if (r.d < minD) minD = r.d;
-                if (r.d > maxD) maxD = r.d;
-                const key = r.e;
-                if (!userMap.has(key)) {
-                    userMap.set(key, { e: r.e, u: r.u, c: r.c });
-                }
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelector(`[data-tab="${tab}"].tab-content`).classList.add('active');
+
+            // Reset state
+            selectedUser = null;
+            selectedOrg = null;
+
+            // Refresh chart
+            if (tab === 'user') {
+                updateUserChart();
+            } else {
+                updateOrgChart();
             }
-            latestDate = parseDate(maxD);
-            earliestDate = parseDate(minD);
-            userIndex = Array.from(userMap.values());
+        }
 
-            // Build org index
-            const orgMap = new Map();
-            for (const r of orgData) {
-                const key = r.oid;
-                if (!orgMap.has(key)) {
-                    orgMap.set(key, {
-                        oid: r.oid,
-                        on: r.on,
-                        members: []
+        // Search and autocomplete
+        function setupSearchAutocomplete() {
+            const userSearchInput = document.getElementById('userSearch');
+            const userAutocomplete = document.getElementById('userAutocomplete');
+            const orgSearchInput = document.getElementById('orgSearch');
+            const orgAutocomplete = document.getElementById('orgAutocomplete');
+
+            userSearchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase();
+                if (!query) {
+                    userAutocomplete.classList.remove('active');
+                    return;
+                }
+                const matches = Object.keys(userIndex).filter(key =>
+                    key.toLowerCase().includes(query)
+                );
+                populateAutocomplete(userAutocomplete, matches, 'user');
+            });
+
+            orgSearchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase();
+                if (!query) {
+                    orgAutocomplete.classList.remove('active');
+                    return;
+                }
+                const matches = Object.keys(orgIndex).filter(key =>
+                    key.toLowerCase().includes(query)
+                );
+                populateAutocomplete(orgAutocomplete, matches, 'org');
+            });
+
+            // Close autocomplete when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.search-container')) {
+                    userAutocomplete.classList.remove('active');
+                    orgAutocomplete.classList.remove('active');
+                }
+            });
+        }
+
+        function populateAutocomplete(container, items, type) {
+            container.innerHTML = '';
+            if (items.length === 0) {
+                container.classList.remove('active');
+                return;
+            }
+            items.slice(0, 10).forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'autocomplete-item';
+                div.textContent = item;
+                div.addEventListener('click', function() {
+                    if (type === 'user') {
+                        selectedUser = item;
+                        document.getElementById('userSearch').value = item;
+                        updateUserChart();
+                    } else {
+                        selectedOrg = item;
+                        document.getElementById('orgSearch').value = item;
+                        updateOrgChart();
+                    }
+                    container.classList.remove('active');
+                });
+                container.appendChild(div);
+            });
+            container.classList.add('active');
+        }
+
+        // Period buttons
+        function setupPeriodButtons() {
+            const periodBtns = document.querySelectorAll('.period-btn');
+            periodBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    selectedPeriod = parseInt(this.getAttribute('data-period'));
+                    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    if (document.querySelector('.tab-content.active').getAttribute('data-tab') === 'user') {
+                        updateUserChart();
+                    } else {
+                        updateOrgChart();
+                    }
+                });
+            });
+        }
+
+        // Load data from JSON files
+        async function loadData() {
+            try {
+                const usageResponse = await fetch('./usage_data.json');
+                const usageData = await usageResponse.json();
+
+                const orgResponse = await fetch('./org_data.json');
+                const orgData = await orgResponse.json();
+
+                const subResponse = await fetch('./sub_data.json');
+                const subData = await subResponse.json();
+
+                // Index users
+                if (usageData.users) {
+                    usageData.users.forEach(user => {
+                        userIndex[user.name] = user;
                     });
                 }
-                orgMap.get(key).members.push({
-                    uid: r.uid,
-                    role: r.role,
-                    status: r.status,
-                    e: r.e,
-                    u: r.u
-                });
-            }
-            orgIndex = Array.from(orgMap.values());
 
-            document.getElementById('userDataNote').textContent =
-                `Data: ${formatDateLong(earliestDate)} to ${formatDateLong(latestDate)} | ${usageData.length.toLocaleString()} records | ${userIndex.length.toLocaleString()} users`;
-            document.getElementById('orgDataNote').textContent =
-                `Data: ${formatDateLong(earliestDate)} to ${formatDateLong(latestDate)} | ${usageData.length.toLocaleString()} records | ${orgIndex.length.toLocaleString()} organizations`;
-        }
-
-        // ─── Tab System ───
-        function initTabs() {
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const tab = btn.dataset.tab;
-                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                    btn.classList.add('active');
-                    document.querySelector(`.tab-content[data-tab="${tab}"]`).classList.add('active');
-                    currentTab = tab;
-                });
-            });
-        }
-
-        // ─── USER TAB ───
-        function initUserTab() {
-            const input = document.getElementById('userSearchInput');
-            const acList = document.getElementById('userAutocompleteList');
-            const periodBtns = document.querySelectorAll('#userTimePeriods .period-btn');
-
-            input.addEventListener('input', () => {
-                showUserSuggestions(input.value.trim());
-            });
-
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    navigateSuggestions(e.key === 'ArrowDown' ? 1 : -1, acList);
-                } else if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleUserEnter();
-                } else if (e.key === 'Escape') {
-                    acList.classList.remove('visible');
+                // Index organizations
+                if (orgData.organizations) {
+                    orgData.organizations.forEach(org => {
+                        orgIndex[org.name] = org;
+                    });
                 }
-            });
 
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('#userSearchInput') && !e.target.closest('#userAutocompleteList')) {
-                    acList.classList.remove('visible');
+                // Index subscriptions by organization ID
+                if (subData.subscriptions) {
+                    subData.subscriptions.forEach(sub => {
+                        subIndex[sub.oid] = sub;
+                    });
                 }
-            });
 
-            periodBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    periodBtns.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    if (currentUser) updateUserChart();
-                });
-            });
-
-            document.getElementById('userClearBtn').addEventListener('click', () => {
-                currentUser = null;
-                input.value = '';
-                document.getElementById('userSelectedBanner').classList.remove('visible');
-                document.getElementById('userChartsSection').classList.remove('visible');
-                document.getElementById('userEmptyState').style.display = 'block';
-            });
-        }
-
-        let userCurrentSuggestions = [];
-
-        function showUserSuggestions(query) {
-            const acList = document.getElementById('userAutocompleteList');
-            if (!query) {
-                acList.classList.remove('visible');
-                userCurrentSuggestions = [];
-                return;
+                // Initialize charts
+                updateUserChart();
+                updateOrgChart();
+            } catch (error) {
+                console.error('Error loading data:', error);
             }
-
-            const q = query.toLowerCase();
-            userCurrentSuggestions = userIndex.filter(u =>
-                u.e.toLowerCase().includes(q) ||
-                u.u.toLowerCase().includes(q) ||
-                (u.c && u.c.toLowerCase().includes(q))
-            ).slice(0, 12);
-
-            if (userCurrentSuggestions.length === 0) {
-                acList.classList.remove('visible');
-                return;
-            }
-
-            acList.innerHTML = userCurrentSuggestions.map((item, idx) => `
-                <div class="autocomplete-item" data-index="${idx}">
-                    <div class="ac-email">${esc(item.e)}</div>
-                    <div class="ac-name">${esc(item.u || '(no name)')}</div>
-                    ${item.c ? '<div class="ac-customer">' + esc(item.c) + '</div>' : ''}
-                </div>
-            `).join('');
-
-            acList.classList.add('visible');
-
-            acList.querySelectorAll('.autocomplete-item').forEach(el => {
-                el.addEventListener('click', () => {
-                    const idx = parseInt(el.dataset.index);
-                    selectUser(userCurrentSuggestions[idx]);
-                });
-            });
         }
 
-        function handleUserEnter() {
-            const acList = document.getElementById('userAutocompleteList');
-            const selected = acList.querySelector('.autocomplete-item.selected');
-
-            if (selected) {
-                const idx = parseInt(selected.dataset.index);
-                selectUser(userCurrentSuggestions[idx]);
-            } else if (userCurrentSuggestions.length > 0) {
-                selectUser(userCurrentSuggestions[0]);
-            } else {
-                const query = document.getElementById('userSearchInput').value.trim().toLowerCase();
-                if (query) {
-                    const exactMatch = userIndex.find(u => u.e.toLowerCase() === query);
-                    if (exactMatch) {
-                        selectUser(exactMatch);
-                    } else {
-                        const partial = userIndex.find(u =>
-                            u.e.toLowerCase().includes(query) || u.u.toLowerCase().includes(query)
-                        );
-                        if (partial) {
-                            selectUser(partial);
-                        } else {
-                            document.getElementById('userErrorMessage').innerHTML =
-                                '<div class="error-message">No user found matching "' + esc(query) + '"</div>';
-                        }
-                    }
-                }
-            }
-
-            acList.classList.remove('visible');
-        }
-
-        function selectUser(user) {
-            currentUser = user;
-            const input = document.getElementById('userSearchInput');
-            input.value = user.e;
-            document.getElementById('userAutocompleteList').classList.remove('visible');
-
-            document.getElementById('userBannerEmail').textContent = user.e;
-            document.getElementById('userBannerName').textContent = user.u || '(no name)';
-            document.getElementById('userBannerCustomer').textContent = user.c ? 'Customer: ' + user.c : '';
-            document.getElementById('userSelectedBanner').classList.add('visible');
-
-            updateUserChart();
-        }
-
+        // Chart rendering
         function updateUserChart() {
-            if (!currentUser) return;
+            const banner = document.getElementById('userBanner');
+            const chartContainer = document.getElementById('userChart');
 
-            const errEl = document.getElementById('userErrorMessage');
-            errEl.innerHTML = '';
-
-            const activePeriod = document.querySelector('#userTimePeriods .period-btn.active').dataset.days;
-            let startDate;
-            if (activePeriod === 'all') {
-                startDate = earliestDate;
-            } else {
-                const days = parseInt(activePeriod);
-                startDate = new Date(latestDate);
-                startDate.setDate(startDate.getDate() - days);
-            }
-
-            const startStr = dateToStr(startDate);
-            const endStr = dateToStr(latestDate);
-
-            const filtered = usageData.filter(r =>
-                r.e === currentUser.e && r.d >= startStr && r.d <= endStr
-            );
-
-            if (filtered.length === 0) {
-                document.getElementById('userChartsSection').classList.add('visible');
-                document.getElementById('userEmptyState').style.display = 'none';
-                errEl.innerHTML = '<div class="no-data-message">No usage data in this time period for this user.</div>';
-                if (currentChart) currentChart.destroy();
-                currentChart = null;
-                ['userTotalMinutes','userAvgDaily','userActiveDays','userPeakDay'].forEach(id =>
-                    document.getElementById(id).textContent = '0');
-                document.getElementById('userTotalHours').textContent = '';
-                document.getElementById('userActiveDaysDetail').textContent = '';
-                document.getElementById('userPeakDayDate').textContent = '';
+            if (!selectedUser || !userIndex[selectedUser]) {
+                banner.style.display = 'none';
+                document.getElementById('totalUsageStat').textContent = '0';
+                document.getElementById('avgDailyStat').textContent = '0';
+                document.getElementById('peakDayStat').textContent = '0';
+                document.getElementById('activeDaysStat').textContent = '0';
+                if (userChart) userChart.destroy();
                 return;
             }
 
-            const dailyMap = new Map();
-            for (const r of filtered) {
-                dailyMap.set(r.d, (dailyMap.get(r.d) || 0) + r.m);
-            }
+            const userData = userIndex[selectedUser];
+            banner.style.display = 'block';
+            document.getElementById('bannerUserName').textContent = userData.name;
+            document.getElementById('bannerUserEmail').textContent = userData.email || 'No email';
 
-            const allDates = [];
-            const allValues = [];
-            const cursor = new Date(startDate);
-            cursor.setHours(0,0,0,0);
-            const end = new Date(latestDate);
-            end.setHours(0,0,0,0);
-
-            while (cursor <= end) {
-                const ds = dateToStr(cursor);
-                allDates.push(ds);
-                allValues.push(Math.round((dailyMap.get(ds) || 0) * 100) / 100);
-                cursor.setDate(cursor.getDate() + 1);
-            }
-
-            const totalDays = allDates.length;
-            const isShort = totalDays <= 60;
-
-            const labels = allDates.map(d => {
-                const dt = parseDate(d);
-                return isShort ? formatDateShort(dt) : formatDateMonth(dt);
-            });
-
-            let chartLabels, chartData;
-            if (!isShort) {
-                const monthMap = new Map();
-                for (let i = 0; i < allDates.length; i++) {
-                    const monthKey = allDates[i].substring(0, 7);
-                    monthMap.set(monthKey, (monthMap.get(monthKey) || 0) + allValues[i]);
-                }
-                chartLabels = Array.from(monthMap.keys()).map(ym => {
-                    const [y, m] = ym.split('-');
-                    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-                    return months[parseInt(m)-1] + '-' + y;
-                });
-                chartData = Array.from(monthMap.values()).map(v => Math.round(v * 100) / 100);
-            } else {
-                chartLabels = labels;
-                chartData = allValues;
-            }
-
-            renderChart(chartLabels, chartData, isShort, 'user');
-            updateUserStats(filtered, dailyMap, totalDays);
-
-            document.getElementById('userChartsSection').classList.add('visible');
-            document.getElementById('userEmptyState').style.display = 'none';
-        }
-
-        function updateUserStats(data, dailyMap, totalDaysInRange) {
-            const totalMin = data.reduce((s, r) => s + r.m, 0);
-            const activeDays = dailyMap.size;
-            const avgDaily = activeDays > 0 ? totalMin / activeDays : 0;
-
-            let peakMin = 0, peakDate = '';
-            dailyMap.forEach((mins, date) => {
-                if (mins > peakMin) { peakMin = mins; peakDate = date; }
-            });
-
-            document.getElementById('userTotalMinutes').textContent = Math.round(totalMin).toLocaleString();
-            document.getElementById('userTotalHours').textContent = (totalMin / 60).toFixed(1) + ' hours';
-            document.getElementById('userAvgDaily').textContent = Math.round(avgDaily).toLocaleString();
-            document.getElementById('userActiveDays').textContent = activeDays;
-            document.getElementById('userActiveDaysDetail').textContent =
-                'out of ' + totalDaysInRange + ' days in range';
-            document.getElementById('userPeakDay').textContent = Math.round(peakMin).toLocaleString() + ' min';
-            document.getElementById('userPeakDayDate').textContent = peakDate
-                ? formatDateLong(parseDate(peakDate))
-                : 'N/A';
-        }
-
-        // ─── ORG TAB ───
-        function initOrgTab() {
-            const input = document.getElementById('orgSearchInput');
-            const acList = document.getElementById('orgAutocompleteList');
-            const periodBtns = document.querySelectorAll('#orgTimePeriods .period-btn');
-
-            input.addEventListener('input', () => {
-                showOrgSuggestions(input.value.trim());
-            });
-
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    navigateSuggestions(e.key === 'ArrowDown' ? 1 : -1, acList);
-                } else if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleOrgEnter();
-                } else if (e.key === 'Escape') {
-                    acList.classList.remove('visible');
-                }
-            });
-
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('#orgSearchInput') && !e.target.closest('#orgAutocompleteList')) {
-                    acList.classList.remove('visible');
-                }
-            });
-
-            periodBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    periodBtns.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    if (currentOrg) updateOrgChart();
-                });
-            });
-
-            document.getElementById('orgClearBtn').addEventListener('click', () => {
-                currentOrg = null;
-                input.value = '';
-                document.getElementById('orgSelectedBanner').classList.remove('visible');
-                document.getElementById('orgChartsSection').classList.remove('visible');
-                document.getElementById('orgEmptyState').style.display = 'block';
-            });
-        }
-
-        let orgCurrentSuggestions = [];
-
-        function showOrgSuggestions(query) {
-            const acList = document.getElementById('orgAutocompleteList');
-            if (!query) {
-                acList.classList.remove('visible');
-                orgCurrentSuggestions = [];
-                return;
-            }
-
-            const q = query.trim();
-            const isNumeric = /^\d+$/.test(q);
-
-            let matches;
-            if (isNumeric) {
-                const oid = parseInt(q);
-                matches = orgIndex.filter(org => org.oid === oid);
-            } else {
-                const qLower = q.toLowerCase();
-                matches = orgIndex.filter(org => {
-                    const nameMatch = org.on.toLowerCase().includes(qLower);
-                    const memberMatch = org.members.some(m =>
-                        m.e.toLowerCase().includes(qLower) || m.u.toLowerCase().includes(qLower)
-                    );
-                    return nameMatch || memberMatch;
-                });
-            }
-
-            orgCurrentSuggestions = matches.slice(0, 12);
-
-            if (orgCurrentSuggestions.length === 0) {
-                acList.classList.remove('visible');
-                return;
-            }
-
-            // Auto-select if exactly 1 match
-            if (orgCurrentSuggestions.length === 1) {
-                selectOrg(orgCurrentSuggestions[0]);
-                acList.classList.remove('visible');
-                return;
-            }
-
-            acList.innerHTML = orgCurrentSuggestions.map((item, idx) => `
-                <div class="autocomplete-item" data-index="${idx}">
-                    <div class="ac-email">${esc(item.on)}</div>
-                    <div class="ac-org-info">ID: ${item.oid} | ${item.members.length} member${item.members.length !== 1 ? 's' : ''}</div>
-                </div>
-            `).join('');
-
-            acList.classList.add('visible');
-
-            acList.querySelectorAll('.autocomplete-item').forEach(el => {
-                el.addEventListener('click', () => {
-                    const idx = parseInt(el.dataset.index);
-                    selectOrg(orgCurrentSuggestions[idx]);
-                });
-            });
-        }
-
-        function handleOrgEnter() {
-            const acList = document.getElementById('orgAutocompleteList');
-            const selected = acList.querySelector('.autocomplete-item.selected');
-
-            if (selected) {
-                const idx = parseInt(selected.dataset.index);
-                selectOrg(orgCurrentSuggestions[idx]);
-            } else if (orgCurrentSuggestions.length > 0) {
-                selectOrg(orgCurrentSuggestions[0]);
-            } else {
-                const q = document.getElementById('orgSearchInput').value.trim();
-                if (q) {
-                    document.getElementById('orgErrorMessage').innerHTML =
-                        '<div class="error-message">No organization found matching "' + esc(q) + '"</div>';
-                }
-            }
-
-            acList.classList.remove('visible');
-        }
-
-        function selectOrg(org) {
-            currentOrg = org;
-            const input = document.getElementById('orgSearchInput');
-            input.value = org.on;
-            document.getElementById('orgAutocompleteList').classList.remove('visible');
-
-            const activeMembers = org.members.filter(m => m.status === 'active').length;
-            const totalMembers = org.members.length;
-
-            document.getElementById('orgBannerName').textContent = org.on;
-            document.getElementById('orgBannerOid').textContent = 'ID: ' + org.oid;
-            document.getElementById('orgBannerMembers').textContent =
-                activeMembers + ' active / ' + totalMembers + ' total members';
-            document.getElementById('orgSelectedBanner').classList.add('visible');
-
-            updateOrgChart();
+            renderChart(userData.dailyUsage, 'user', userData);
         }
 
         function updateOrgChart() {
-            if (!currentOrg) return;
+            const banner = document.getElementById('orgBanner');
+            const licenseContainer = document.getElementById('licenseStatsContainer');
 
-            const errEl = document.getElementById('orgErrorMessage');
-            errEl.innerHTML = '';
-
-            const activePeriod = document.querySelector('#orgTimePeriods .period-btn.active').dataset.days;
-            let startDate;
-            if (activePeriod === 'all') {
-                startDate = earliestDate;
-            } else {
-                const days = parseInt(activePeriod);
-                startDate = new Date(latestDate);
-                startDate.setDate(startDate.getDate() - days);
-            }
-
-            const startStr = dateToStr(startDate);
-            const endStr = dateToStr(latestDate);
-
-            // Get all emails in this org
-            const orgEmails = new Set(currentOrg.members.map(m => m.e));
-
-            // Filter usage data for all members in this org
-            const filtered = usageData.filter(r =>
-                orgEmails.has(r.e) && r.d >= startStr && r.d <= endStr
-            );
-
-            if (filtered.length === 0) {
-                document.getElementById('orgChartsSection').classList.add('visible');
-                document.getElementById('orgEmptyState').style.display = 'none';
-                errEl.innerHTML = '<div class="no-data-message">No usage data in this time period for this organization.</div>';
-                if (currentChart) currentChart.destroy();
-                currentChart = null;
-                ['orgTotalMinutes','orgAvgDaily','orgActiveDays','orgPeakDay'].forEach(id =>
-                    document.getElementById(id).textContent = '0');
-                document.getElementById('orgTotalHours').textContent = '';
-                document.getElementById('orgActiveDaysDetail').textContent = '';
-                document.getElementById('orgPeakDayDate').textContent = '';
-                document.getElementById('orgMemberTableBody').innerHTML = '';
+            if (!selectedOrg || !orgIndex[selectedOrg]) {
+                banner.style.display = 'none';
+                licenseContainer.style.display = 'none';
+                document.getElementById('orgTotalUsageStat').textContent = '0';
+                document.getElementById('orgAvgDailyStat').textContent = '0';
+                document.getElementById('orgPeakDayStat').textContent = '0';
+                document.getElementById('orgActiveDaysStat').textContent = '0';
+                document.getElementById('memberTableBody').innerHTML = '<tr><td colspan="4" class="no-data">No data available</td></tr>';
+                if (orgChart) orgChart.destroy();
                 return;
             }
 
-            // Aggregate by day across all members
-            const dailyMap = new Map();
-            for (const r of filtered) {
-                dailyMap.set(r.d, (dailyMap.get(r.d) || 0) + r.m);
-            }
+            const orgData = orgIndex[selectedOrg];
+            banner.style.display = 'block';
+            document.getElementById('bannerOrgName').textContent = orgData.name;
+            document.getElementById('bannerOrgEmail').textContent = orgData.email || 'No email';
 
-            const allDates = [];
-            const allValues = [];
-            const cursor = new Date(startDate);
-            cursor.setHours(0,0,0,0);
-            const end = new Date(latestDate);
-            end.setHours(0,0,0,0);
-
-            while (cursor <= end) {
-                const ds = dateToStr(cursor);
-                allDates.push(ds);
-                allValues.push(Math.round((dailyMap.get(ds) || 0) * 100) / 100);
-                cursor.setDate(cursor.getDate() + 1);
-            }
-
-            const totalDays = allDates.length;
-            const isShort = totalDays <= 60;
-
-            const labels = allDates.map(d => {
-                const dt = parseDate(d);
-                return isShort ? formatDateShort(dt) : formatDateMonth(dt);
-            });
-
-            let chartLabels, chartData;
-            if (!isShort) {
-                const monthMap = new Map();
-                for (let i = 0; i < allDates.length; i++) {
-                    const monthKey = allDates[i].substring(0, 7);
-                    monthMap.set(monthKey, (monthMap.get(monthKey) || 0) + allValues[i]);
-                }
-                chartLabels = Array.from(monthMap.keys()).map(ym => {
-                    const [y, m] = ym.split('-');
-                    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-                    return months[parseInt(m)-1] + '-' + y;
-                });
-                chartData = Array.from(monthMap.values()).map(v => Math.round(v * 100) / 100);
+            // Display subscription info in banner
+            const subInfo = subIndex[orgData.oid];
+            const subBanner = document.getElementById('orgBannerSubscription');
+            if (subInfo) {
+                subBanner.innerHTML = `<strong>Plan:</strong> ${subInfo.plan} | <strong>Billing:</strong> ${subInfo.billingInterval} | <strong>Licenses:</strong> ${subInfo.licenses}`;
             } else {
-                chartLabels = labels;
-                chartData = allValues;
+                subBanner.innerHTML = 'No subscription information available';
             }
 
-            renderChart(chartLabels, chartData, isShort, 'org');
-            updateOrgStats(filtered, dailyMap, totalDays);
-            updateOrgMemberTable(filtered);
+            // Display license stats
+            if (subInfo) {
+                licenseContainer.style.display = 'block';
+                document.getElementById('paidLicensesStat').textContent = subInfo.licenses || '0';
+                document.getElementById('totalMembersStat').textContent = subInfo.totalMembers || '0';
+                document.getElementById('activeMembersStat').textContent = subInfo.activeMembers || '0';
+                document.getElementById('inactiveMembersStat').textContent = (subInfo.totalMembers - subInfo.activeMembers) || '0';
+            } else {
+                licenseContainer.style.display = 'none';
+            }
 
-            document.getElementById('orgChartsSection').classList.add('visible');
-            document.getElementById('orgEmptyState').style.display = 'none';
+            // Display member breakdown
+            if (orgData.members && orgData.members.length > 0) {
+                const tbody = document.getElementById('memberTableBody');
+                tbody.innerHTML = '';
+                orgData.members.forEach(member => {
+                    const tr = document.createElement('tr');
+                    const activeDays = member.dailyUsage ? Object.keys(member.dailyUsage).filter(date => member.dailyUsage[date] > 0).length : 0;
+                    tr.innerHTML = `
+                        <td>${member.name}</td>
+                        <td>${member.email}</td>
+                        <td>${member.totalUsage || 0}</td>
+                        <td>${activeDays} days with data</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            renderChart(orgData.dailyUsage, 'org', orgData);
         }
 
-        function updateOrgStats(data, dailyMap, totalDaysInRange) {
-            const totalMin = data.reduce((s, r) => s + r.m, 0);
-            const activeDays = dailyMap.size;
-            const avgDaily = activeDays > 0 ? totalMin / activeDays : 0;
-
-            let peakMin = 0, peakDate = '';
-            dailyMap.forEach((mins, date) => {
-                if (mins > peakMin) { peakMin = mins; peakDate = date; }
-            });
-
-            document.getElementById('orgTotalMinutes').textContent = Math.round(totalMin).toLocaleString();
-            document.getElementById('orgTotalHours').textContent = (totalMin / 60).toFixed(1) + ' hours';
-            document.getElementById('orgAvgDaily').textContent = Math.round(avgDaily).toLocaleString();
-            document.getElementById('orgActiveDays').textContent = activeDays;
-            document.getElementById('orgActiveDaysDetail').textContent =
-                'out of ' + totalDaysInRange + ' days in range';
-            document.getElementById('orgPeakDay').textContent = Math.round(peakMin).toLocaleString() + ' min';
-            document.getElementById('orgPeakDayDate').textContent = peakDate
-                ? formatDateLong(parseDate(peakDate))
-                : 'N/A';
-        }
-
-        function updateOrgMemberTable(filtered) {
-            // Build member usage summary
-            const memberUsage = new Map();
-            for (const r of filtered) {
-                if (!memberUsage.has(r.e)) {
-                    memberUsage.set(r.e, { minutes: 0 });
+        function renderChart(dailyUsage, type, data) {
+            if (!dailyUsage || Object.keys(dailyUsage).length === 0) {
+                if (type === 'user') {
+                    document.getElementById('totalUsageStat').textContent = '0';
+                    document.getElementById('avgDailyStat').textContent = '0';
+                    document.getElementById('peakDayStat').textContent = '0';
+                    document.getElementById('activeDaysStat').textContent = '0';
+                } else {
+                    document.getElementById('orgTotalUsageStat').textContent = '0';
+                    document.getElementById('orgAvgDailyStat').textContent = '0';
+                    document.getElementById('orgPeakDayStat').textContent = '0';
+                    document.getElementById('orgActiveDaysStat').textContent = '0';
                 }
-                memberUsage.get(r.e).minutes += r.m;
+                return;
             }
 
-            // Get member info from org data and sort by total minutes desc
-            const rows = currentOrg.members.map(member => {
-                const usage = memberUsage.get(member.e) || { minutes: 0 };
-                return {
-                    username: member.u,
-                    email: member.e,
-                    role: member.role,
-                    status: member.status,
-                    minutes: usage.minutes
-                };
-            }).sort((a, b) => b.minutes - a.minutes);
+            // Get dates with actual data
+            const datesWithData = Object.keys(dailyUsage).sort();
+            const isShort = selectedPeriod <= 60;
 
-            const tbody = document.getElementById('orgMemberTableBody');
-            tbody.innerHTML = rows.map(row => `
-                <tr class="${row.status === 'removed' ? 'removed' : ''}">
-                    <td>${esc(row.username)}</td>
-                    <td>${esc(row.email)}</td>
-                    <td>${esc(row.role)}</td>
-                    <td><span class="member-status ${row.status}">${esc(row.status)}</span></td>
-                    <td>${Math.round(row.minutes).toLocaleString()}</td>
-                </tr>
-            `).join('');
-        }
+            let labels, values;
 
-        // ─── Shared Chart Rendering ───
-        function renderChart(labels, data, isShort, tab) {
-            const chartId = tab === 'user' ? 'userChart' : 'orgChart';
-            const ctx = document.getElementById(chartId).getContext('2d');
-            if (currentChart) currentChart.destroy();
+            if (isShort) {
+                // For short periods: only show dates with actual data
+                labels = datesWithData;
+                values = datesWithData.map(date => dailyUsage[date]);
+            } else {
+                // For long periods: aggregate by month
+                const monthlyData = {};
+                datesWithData.forEach(date => {
+                    const [year, month] = date.substring(0, 7).split('-');
+                    const monthKey = `${year}-${month}`;
+                    monthlyData[monthKey] = (monthlyData[monthKey] || 0) + dailyUsage[date];
+                });
+                labels = Object.keys(monthlyData).sort();
+                values = labels.map(month => monthlyData[month]);
+            }
 
-            const yLabel = isShort ? 'Minutes per Day' : 'Minutes per Month';
-            const xLabel = isShort ? 'Date' : 'Month';
+            // Calculate stats
+            const totalUsage = values.reduce((a, b) => a + b, 0);
+            const avgDaily = (totalUsage / values.length).toFixed(2);
+            const peakDay = Math.max(...values);
+            const activeDays = values.filter(v => v > 0).length;
 
-            currentChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: 'Usage (minutes)',
-                        data,
-                        borderColor: '#2563eb',
-                        backgroundColor: 'rgba(37, 99, 235, 0.7)',
-                        borderWidth: 0,
-                        borderRadius: 3,
-                        fill: true,
-                        tension: 0.3,
-                        pointRadius: isShort ? 0 : 4,
-                        pointBackgroundColor: '#2563eb',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointHoverRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
+            if (type === 'user') {
+                document.getElementById('totalUsageStat').textContent = totalUsage;
+                document.getElementById('avgDailyStat').textContent = avgDaily;
+                document.getElementById('peakDayStat').textContent = peakDay;
+                document.getElementById('activeDaysStat').textContent = activeDays;
+
+                if (userChart) userChart.destroy();
+                userChart = new Chart(document.getElementById('userChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Daily Usage',
+                            data: values,
+                            backgroundColor: '#2563eb',
+                            borderColor: '#1e40af',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
                     },
-                    plugins: {
-                        legend: {
-                            display: true,
-                            labels: {
-                                font: { size: 13, weight: '600' },
-                                color: '#475569',
-                                padding: 20,
-                                usePointStyle: true,
-                                pointStyle: 'rectRounded'
-                            }
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
                         },
-                        tooltip: {
-                            backgroundColor: '#1e293b',
-                            titleFont: { size: 13, weight: '600' },
-                            bodyFont: { size: 12 },
-                            padding: 12,
-                            cornerRadius: 8,
-                            callbacks: {
-                                label: function(ctx) {
-                                    return ctx.parsed.y.toFixed(1) + ' minutes';
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: yLabel,
-                                font: { size: 12, weight: '600' },
-                                color: '#64748b'
-                            },
-                            ticks: {
-                                color: '#94a3b8',
-                                callback: function(val) { return Math.round(val) + ' min'; }
-                            },
-                            grid: { color: 'rgba(0, 0, 0, 0.04)' }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: xLabel,
-                                font: { size: 12, weight: '600' },
-                                color: '#64748b'
-                            },
-                            ticks: {
-                                color: '#94a3b8',
-                                maxRotation: 45,
-                                autoSkip: true,
-                                maxTicksLimit: isShort ? 15 : 12
-                            },
-                            grid: { display: false }
+                        scales: {
+                            y: { beginAtZero: true }
                         }
                     }
-                }
-            });
-        }
-
-        // ─── Helpers ───
-        function navigateSuggestions(direction, acList) {
-            const items = acList.querySelectorAll('.autocomplete-item');
-            if (items.length === 0) return;
-
-            const current = acList.querySelector('.autocomplete-item.selected');
-            let newIdx = 0;
-
-            if (current) {
-                const curIdx = parseInt(current.dataset.index);
-                current.classList.remove('selected');
-                newIdx = curIdx + direction;
-                if (newIdx < 0) newIdx = items.length - 1;
-                if (newIdx >= items.length) newIdx = 0;
+                });
             } else {
-                newIdx = direction === 1 ? 0 : items.length - 1;
+                document.getElementById('orgTotalUsageStat').textContent = totalUsage;
+                document.getElementById('orgAvgDailyStat').textContent = avgDaily;
+                document.getElementById('orgPeakDayStat').textContent = peakDay;
+                document.getElementById('orgActiveDaysStat').textContent = activeDays;
+
+                if (orgChart) orgChart.destroy();
+                orgChart = new Chart(document.getElementById('orgChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Daily Usage',
+                            data: values,
+                            backgroundColor: '#2563eb',
+                            borderColor: '#1e40af',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
             }
-
-            items[newIdx].classList.add('selected');
-            items[newIdx].scrollIntoView({ block: 'nearest' });
-        }
-
-        function parseDate(str) {
-            const [y, m, d] = str.split('-').map(Number);
-            return new Date(y, m - 1, d);
-        }
-
-        function dateToStr(dt) {
-            const y = dt.getFullYear();
-            const m = String(dt.getMonth() + 1).padStart(2, '0');
-            const d = String(dt.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
-        }
-
-        const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-        function formatDateShort(dt) {
-            return dt.getDate().toString().padStart(2, '0') + '-' + MONTHS[dt.getMonth()] + '-' + dt.getFullYear();
-        }
-
-        function formatDateMonth(dt) {
-            return MONTHS[dt.getMonth()] + '-' + dt.getFullYear();
-        }
-
-        function formatDateLong(dt) {
-            return dt.getDate() + ' ' + MONTHS[dt.getMonth()] + ' ' + dt.getFullYear();
-        }
-
-        function esc(text) {
-            const d = document.createElement('div');
-            d.textContent = text || '';
-            return d.innerHTML;
         }
     </script>
 </body>
