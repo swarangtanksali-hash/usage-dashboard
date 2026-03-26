@@ -199,8 +199,8 @@
         }
 
         .stats-card {
-            background: white;
-            border: 2px solid #e5e7eb;
+            background: #f0f4ff;
+            border: 1px solid #dbe4f8;
             border-radius: 8px;
             padding: 20px;
             text-align: center;
@@ -208,12 +208,12 @@
         }
 
         .stats-card:hover {
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            border-color: #2563eb;
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.08);
+            border-color: #93b4f4;
         }
 
         .stats-card h3 {
-            color: #6b7280;
+            color: #64748b;
             font-size: 0.9em;
             font-weight: 500;
             text-transform: uppercase;
@@ -224,12 +224,12 @@
         .stats-card .value {
             font-size: 2em;
             font-weight: 700;
-            color: #1f2937;
+            color: #1e3a5f;
         }
 
         .license-card {
-            background: white;
-            border: 2px solid #16a34a;
+            background: #ecfdf5;
+            border: 1px solid #bbf7d0;
             border-radius: 8px;
             padding: 20px;
             text-align: center;
@@ -237,12 +237,12 @@
         }
 
         .license-card:hover {
-            box-shadow: 0 10px 25px rgba(22, 163, 74, 0.2);
-            border-color: #15803d;
+            box-shadow: 0 6px 18px rgba(22, 163, 74, 0.08);
+            border-color: #86efac;
         }
 
         .license-card h3 {
-            color: #6b7280;
+            color: #64748b;
             font-size: 0.9em;
             font-weight: 500;
             text-transform: uppercase;
@@ -253,17 +253,12 @@
         .license-card .value {
             font-size: 2em;
             font-weight: 700;
-            color: #16a34a;
-        }
-
-        .license-card .value.date-val {
-            font-size: 1.1em;
-            font-weight: 600;
+            color: #166534;
         }
 
         .upsell-card {
             background: #fffbeb;
-            border: 2px solid #f59e0b;
+            border: 1px solid #fde68a;
             border-radius: 8px;
             padding: 20px;
             text-align: center;
@@ -272,12 +267,12 @@
         }
 
         .upsell-card:hover {
-            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.2);
-            border-color: #d97706;
+            box-shadow: 0 6px 18px rgba(245, 158, 11, 0.1);
+            border-color: #fbbf24;
         }
 
         .upsell-card h3 {
-            color: #6b7280;
+            color: #64748b;
             font-size: 0.9em;
             font-weight: 500;
             text-transform: uppercase;
@@ -288,7 +283,7 @@
         .upsell-card .value {
             font-size: 2em;
             font-weight: 700;
-            color: #d97706;
+            color: #b45309;
         }
 
         .banner {
@@ -560,14 +555,6 @@
                         <div class="license-card">
                             <h3>Inactive/Removed</h3>
                             <div class="value" id="inactiveMembersStat">0</div>
-                        </div>
-                        <div class="license-card">
-                            <h3>License Start</h3>
-                            <div class="value date-val" id="licenseStartStat">—</div>
-                        </div>
-                        <div class="license-card">
-                            <h3>License End</h3>
-                            <div class="value date-val" id="licenseEndStat">—</div>
                         </div>
                         <div class="upsell-card" id="sameDomainCard">
                             <h3>Same Domain, Not in Org</h3>
@@ -850,9 +837,6 @@
             document.getElementById('totalMembersStat').textContent = org.members.length;
             document.getElementById('activeMembersStat').textContent = active;
             document.getElementById('inactiveMembersStat').textContent = org.members.length - active;
-            document.getElementById('licenseStartStat').textContent = sub ? fmtDate(sub.start) : '—';
-            document.getElementById('licenseEndStat').textContent = sub ? fmtDate(sub.end) : '—';
-
             computeSameDomainUsers(org);
             updateOrgChart();
         }
