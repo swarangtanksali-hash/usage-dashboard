@@ -689,8 +689,10 @@
             const input = document.getElementById('userSearch');
             const acList = document.getElementById('userAutocomplete');
             let suggestions = [];
+            let picking = false; // prevent input event from re-triggering after pick
 
             input.addEventListener('input', () => {
+                if (picking) { picking = false; return; }
                 const q = input.value.trim().toLowerCase();
                 if (!q) { acList.classList.remove('active'); suggestions = []; return; }
                 suggestions = userIndex.filter(u =>
@@ -703,14 +705,8 @@
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     const sel = acList.querySelector('.autocomplete-item.selected');
-                    if (sel) { pickUser(suggestions[parseInt(sel.dataset.idx)]); }
-                    else if (suggestions.length > 0) { pickUser(suggestions[0]); }
-                    else {
-                        const q = input.value.trim().toLowerCase();
-                        const match = userIndex.find(u => u.e.toLowerCase() === q) ||
-                                      userIndex.find(u => u.e.toLowerCase().includes(q) || u.u.toLowerCase().includes(q));
-                        if (match) pickUser(match);
-                    }
+                    if (sel) { selectUser(suggestions[parseInt(sel.dataset.idx)]); }
+                    else if (suggestions.length > 0) { selectUser(suggestions[0]); }
                     acList.classList.remove('active');
                 } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                     e.preventDefault();
@@ -719,6 +715,11 @@
                     acList.classList.remove('active');
                 }
             });
+
+            function selectUser(user) {
+                picking = true;
+                pickUser(user);
+            }
 
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('#userSearch') && !e.target.closest('#userAutocomplete'))
@@ -737,7 +738,10 @@
             ).join('');
             acList.classList.add('active');
             acList.querySelectorAll('.autocomplete-item').forEach(el => {
-                el.addEventListener('click', () => pickUser(suggestions[parseInt(el.dataset.idx)]));
+                el.addEventListener('mousedown', (e) => {
+                    e.preventDefault(); // prevent input blur
+                    pickUser(suggestions[parseInt(el.dataset.idx)]);
+                });
             });
         }
 
@@ -756,13 +760,15 @@
             const input = document.getElementById('orgSearch');
             const acList = document.getElementById('orgAutocomplete');
             let suggestions = [];
+            let picking = false;
 
             input.addEventListener('input', () => {
+                if (picking) { picking = false; return; }
                 const q = input.value.trim();
                 if (!q) { acList.classList.remove('active'); suggestions = []; return; }
                 const isNum = /^\d+$/.test(q);
                 if (isNum) {
-                    suggestions = orgIndex.filter(o => o.oid === parseInt(q));
+                    suggestions = orgIndex.filter(o => String(o.oid).includes(q));
                 } else {
                     const ql = q.toLowerCase();
                     suggestions = orgIndex.filter(o =>
@@ -771,15 +777,15 @@
                     ).slice(0, 12);
                 }
                 renderOrgSuggestions(acList, suggestions);
-                if (suggestions.length === 1) { pickOrg(suggestions[0]); acList.classList.remove('active'); }
+                // Never auto-select — always let the user choose
             });
 
             input.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     const sel = acList.querySelector('.autocomplete-item.selected');
-                    if (sel) pickOrg(suggestions[parseInt(sel.dataset.idx)]);
-                    else if (suggestions.length > 0) pickOrg(suggestions[0]);
+                    if (sel) { picking = true; pickOrg(suggestions[parseInt(sel.dataset.idx)]); }
+                    else if (suggestions.length > 0) { picking = true; pickOrg(suggestions[0]); }
                     acList.classList.remove('active');
                 } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                     e.preventDefault();
@@ -806,7 +812,10 @@
             }).join('');
             acList.classList.add('active');
             acList.querySelectorAll('.autocomplete-item').forEach(el => {
-                el.addEventListener('click', () => pickOrg(suggestions[parseInt(el.dataset.idx)]));
+                el.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    pickOrg(suggestions[parseInt(el.dataset.idx)]);
+                });
             });
         }
 
