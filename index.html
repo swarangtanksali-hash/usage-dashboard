@@ -390,6 +390,9 @@
         let emailToOrg = new Map();
         // Global last-active per email
         let lastActiveMap = new Map();
+        // Monthly chunk cache: "2025-07" → [rows]
+        let monthCache = new Map();
+        let manifest = [];
 
         const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -408,24 +411,38 @@
             }
         });
 
-        // ─── Data Loading ───
+        // ─── Data Loading (chunked by month) ───
         async function loadAllData() {
-            const [usageResp, orgResp, subResp] = await Promise.all([
-                fetch('./usage_data.json'), fetch('./org_data.json'), fetch('./sub_data.json')
+            // 1. Load manifest + org + sub in parallel
+            const [manifestResp, orgResp, subResp] = await Promise.all([
+                fetch('./usage_manifest.json'), fetch('./org_data.json'), fetch('./sub_data.json')
             ]);
-            usageData = await usageResp.json();
+            manifest = await manifestResp.json();
             orgMembers = await orgResp.json();
             subData = await subResp.json();
 
+            // 2. Fetch all monthly chunks in parallel
+            const chunkPromises = manifest.map(async (m) => {
+                const resp = await fetch('./' + m.file);
+                return { month: m.month, rows: await resp.json() };
+            });
+            const chunks = await Promise.all(chunkPromises);
+
+            // 3. Merge into usageData and build indexes
             let minD = '9999', maxD = '0000';
             const uMap = new Map();
-            for (const r of usageData) {
-                if (r.d < minD) minD = r.d;
-                if (r.d > maxD) maxD = r.d;
-                if (!uMap.has(r.e)) uMap.set(r.e, { e: r.e, u: r.u, c: r.c });
-                // Track last active globally
-                const prev = lastActiveMap.get(r.e);
-                if (!prev || r.d > prev) lastActiveMap.set(r.e, r.d);
+            usageData = [];
+
+            for (const chunk of chunks) {
+                monthCache.set(chunk.month, chunk.rows);
+                for (const r of chunk.rows) {
+                    usageData.push(r);
+                    if (r.d < minD) minD = r.d;
+                    if (r.d > maxD) maxD = r.d;
+                    if (!uMap.has(r.e)) uMap.set(r.e, { e: r.e, u: r.u, c: r.c });
+                    const prev = lastActiveMap.get(r.e);
+                    if (!prev || r.d > prev) lastActiveMap.set(r.e, r.d);
+                }
             }
             latestDate = parseDate(maxD);
             earliestDate = parseDate(minD);
@@ -435,7 +452,6 @@
             for (const r of orgMembers) {
                 if (!oMap.has(r.oid)) oMap.set(r.oid, { oid: r.oid, on: r.on, members: [] });
                 oMap.get(r.oid).members.push({ uid: r.uid, role: r.role, status: r.status, e: r.e, u: r.u });
-                // Reverse lookup
                 if (!emailToOrg.has(r.e)) emailToOrg.set(r.e, []);
                 emailToOrg.get(r.e).push({ oid: r.oid, on: r.on, role: r.role, status: r.status });
             }

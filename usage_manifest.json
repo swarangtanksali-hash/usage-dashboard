@@ -1,0 +1,56 @@
+[
+  {
+    "month": "2025-07",
+    "file": "usage_2025_07.json",
+    "rows": 2544,
+    "size": 219038
+  },
+  {
+    "month": "2025-08",
+    "file": "usage_2025_08.json",
+    "rows": 3306,
+    "size": 284335
+  },
+  {
+    "month": "2025-09",
+    "file": "usage_2025_09.json",
+    "rows": 4540,
+    "size": 391741
+  },
+  {
+    "month": "2025-10",
+    "file": "usage_2025_10.json",
+    "rows": 9367,
+    "size": 807334
+  },
+  {
+    "month": "2025-11",
+    "file": "usage_2025_11.json",
+    "rows": 6743,
+    "size": 589500
+  },
+  {
+    "month": "2025-12",
+    "file": "usage_2025_12.json",
+    "rows": 4223,
+    "size": 373992
+  },
+  {
+    "month": "2026-01",
+    "file": "usage_2026_01.json",
+    "rows": 4419,
+    "size": 386844
+  },
+  {
+    "month": "2026-02",
+    "file": "usage_2026_02.json",
+    "rows": 5064,
+    "size": 446995
+  },
+  {
+    "month": "2026-03",
+    "file": "usage_2026_03.json",
+    "rows": 5739,
+    "size": 506958
+  }
+]
