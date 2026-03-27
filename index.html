@@ -463,6 +463,70 @@
             T: '#0891b2', X: '#dc2626', R: '#4f46e5', B: '#be185d'
         };
 
+        // ─── URL State Persistence ───
+        function saveState() {
+            const params = new URLSearchParams();
+            const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab || 'user';
+            params.set('tab', activeTab);
+            if (activeTab === 'user') {
+                params.set('period', getActivePeriod('user'));
+                if (selectedUser) params.set('user', selectedUser.e);
+            } else {
+                params.set('period', getActivePeriod('org'));
+                if (selectedOrg) params.set('org', String(selectedOrg.oid));
+            }
+            history.replaceState(null, '', '#' + params.toString());
+        }
+
+        function loadState() {
+            const hash = location.hash.replace('#', '');
+            if (!hash) return;
+            const params = new URLSearchParams(hash);
+            const tab = params.get('tab');
+            const period = params.get('period');
+            const userEmail = params.get('user');
+            const orgId = params.get('org');
+
+            // Restore tab
+            if (tab) {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                const tabBtn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
+                const tabContent = document.querySelector(`.tab-content[data-tab="${tab}"]`);
+                if (tabBtn) tabBtn.classList.add('active');
+                if (tabContent) tabContent.classList.add('active');
+            }
+
+            // Restore period for the active tab
+            const activeTab = tab || 'user';
+            if (period) {
+                const tabContent = document.querySelector(`.tab-content[data-tab="${activeTab}"]`);
+                if (tabContent) {
+                    tabContent.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+                    const periodBtn = tabContent.querySelector(`.period-btn[data-period="${period}"]`);
+                    if (periodBtn) periodBtn.classList.add('active');
+                }
+            }
+
+            // Restore user selection
+            if (userEmail) {
+                const user = userIndex.find(u => u.e === userEmail);
+                if (user) {
+                    pickUser(user);
+                    document.getElementById('userSearch').value = user.e;
+                }
+            }
+
+            // Restore org selection
+            if (orgId) {
+                const org = orgIndex.find(o => String(o.oid) === orgId);
+                if (org) {
+                    pickOrg(org);
+                    document.getElementById('orgSearch').value = org.on;
+                }
+            }
+        }
+
         // ─── Init ───
         document.addEventListener('DOMContentLoaded', async () => {
             try {
@@ -471,6 +535,7 @@
                 setupPeriodButtons();
                 setupUserSearch();
                 setupOrgSearch();
+                loadState(); // restore from URL hash
             } catch (err) {
                 console.error('Init error:', err);
                 document.querySelector('.main-content').innerHTML =
@@ -555,6 +620,7 @@
                     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                     btn.classList.add('active');
                     document.querySelector(`.tab-content[data-tab="${tab}"]`).classList.add('active');
+                    saveState();
                 });
             });
         }
@@ -569,6 +635,7 @@
                     const tab = tabContent.dataset.tab;
                     if (tab === 'user' && selectedUser) { updateUserChart(); updateUserFeatureCharts(); }
                     if (tab === 'org' && selectedOrg) { highlightedMember = null; updateOrgChart(); updateOrgFeatureCharts(); }
+                    saveState();
                 });
             });
         }
@@ -656,6 +723,7 @@
 
             updateUserChart();
             updateUserFeatureCharts();
+            saveState();
         }
 
         // ─── Org Search ───
@@ -747,6 +815,7 @@
             computeSameDomainUsers(org);
             updateOrgChart();
             updateOrgFeatureCharts();
+            saveState();
         }
 
         // ─── Same Domain Upsell ───
