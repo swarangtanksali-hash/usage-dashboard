@@ -201,6 +201,32 @@
         .badge-warning { background: #fef9c3; color: #854d0e; }
         .badge-danger { background: #fef2f2; color: #991b1b; }
 
+        /* ─── Feature Breakdown Section ─── */
+        .feature-section {
+            margin-top: 30px;
+        }
+        .feature-section h3 {
+            font-size: 1.1em; color: #1f2937; font-weight: 600; margin-bottom: 20px;
+        }
+        .feature-charts-row {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+        }
+        .feature-chart-box {
+            background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 8px; padding: 20px;
+        }
+        .feature-chart-box h4 {
+            font-size: 0.9em; color: #374151; font-weight: 600; margin-bottom: 12px;
+        }
+        .feature-chart-wrap { position: relative; height: 320px; }
+        .feature-no-data {
+            display: flex; align-items: center; justify-content: center;
+            height: 100%; color: #9ca3af; font-size: 0.95em; font-style: italic;
+        }
+
+        @media (max-width: 900px) {
+            .feature-charts-row { grid-template-columns: 1fr; }
+        }
+
         @media (max-width: 768px) {
             header h1 { font-size: 1.8em; }
             .main-content { padding: 20px; }
@@ -280,6 +306,21 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Feature Breakdown (User) -->
+                <div class="feature-section" id="userFeatureSection" style="display:none;">
+                    <h3>Feature &amp; Activity Breakdown</h3>
+                    <div class="feature-charts-row">
+                        <div class="feature-chart-box">
+                            <h4>Feature Trends (Time Series)</h4>
+                            <div class="feature-chart-wrap"><canvas id="userFeatureLineChart"></canvas></div>
+                        </div>
+                        <div class="feature-chart-box">
+                            <h4>Feature Summary (Total Events)</h4>
+                            <div class="feature-chart-wrap"><canvas id="userFeatureBarChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- ORGANIZATION TAB -->
@@ -327,6 +368,21 @@
                         </div>
                     </div>
                     <div id="orgConcentration" class="concentration-bar" style="display:none;"></div>
+                </div>
+
+                <!-- Feature Breakdown (Org) -->
+                <div class="feature-section" id="orgFeatureSection" style="display:none;">
+                    <h3>Feature &amp; Activity Breakdown (Organization)</h3>
+                    <div class="feature-charts-row">
+                        <div class="feature-chart-box">
+                            <h4>Feature Trends (Time Series)</h4>
+                            <div class="feature-chart-wrap"><canvas id="orgFeatureLineChart"></canvas></div>
+                        </div>
+                        <div class="feature-chart-box">
+                            <h4>Feature Summary (Total Events)</h4>
+                            <div class="feature-chart-wrap"><canvas id="orgFeatureBarChart"></canvas></div>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="licenseStatsContainer" style="display: none;">
@@ -380,21 +436,32 @@
     <script>
         // ─── Global State ───
         let usageData = [], orgMembers = [], subData = [];
+        let eventsData = []; // feature/activity events
         let userIndex = [], orgIndex = [];
         let subIndex = new Map();
         let selectedUser = null, selectedOrg = null;
         let userChartObj = null, orgChartObj = null;
+        let userFeatureLineObj = null, userFeatureBarObj = null;
+        let orgFeatureLineObj = null, orgFeatureBarObj = null;
         let latestDate = null, earliestDate = null;
         let highlightedMember = null, orgChartData = null;
-        // Reverse lookup: email → [{oid, on, role, status}]
         let emailToOrg = new Map();
-        // Global last-active per email
         let lastActiveMap = new Map();
-        // Monthly chunk cache: "2025-07" → [rows]
         let monthCache = new Map();
         let manifest = [];
 
         const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+        // Feature category config
+        const FEAT_KEYS = ['D','A','P','I','T','X','R','B'];
+        const FEAT_LABELS = {
+            D: 'Drawing', A: 'AI', P: 'Present', I: 'Import',
+            T: 'Terrain', X: 'Export', R: 'Projects', B: 'BIM'
+        };
+        const FEAT_COLORS = {
+            D: '#2563eb', A: '#7c3aed', P: '#059669', I: '#d97706',
+            T: '#0891b2', X: '#dc2626', R: '#4f46e5', B: '#be185d'
+        };
 
         // ─── Init ───
         document.addEventListener('DOMContentLoaded', async () => {
@@ -413,22 +480,21 @@
 
         // ─── Data Loading (chunked by month) ───
         async function loadAllData() {
-            // 1. Load manifest + org + sub in parallel
-            const [manifestResp, orgResp, subResp] = await Promise.all([
-                fetch('./usage_manifest.json'), fetch('./org_data.json'), fetch('./sub_data.json')
+            const [manifestResp, orgResp, subResp, evtManifestResp] = await Promise.all([
+                fetch('./usage_manifest.json'), fetch('./org_data.json'), fetch('./sub_data.json'),
+                fetch('./events_manifest.json').catch(() => null)
             ]);
             manifest = await manifestResp.json();
             orgMembers = await orgResp.json();
             subData = await subResp.json();
 
-            // 2. Fetch all monthly chunks in parallel
+            // Load usage chunks
             const chunkPromises = manifest.map(async (m) => {
                 const resp = await fetch('./' + m.file);
                 return { month: m.month, rows: await resp.json() };
             });
             const chunks = await Promise.all(chunkPromises);
 
-            // 3. Merge into usageData and build indexes
             let minD = '9999', maxD = '0000';
             const uMap = new Map();
             usageData = [];
@@ -463,6 +529,21 @@
                     if (!existing || s.start > existing.start) subIndex.set(s.oid, s);
                 }
             }
+
+            // Load events data (feature breakdown)
+            if (evtManifestResp && evtManifestResp.ok) {
+                const evtManifest = await evtManifestResp.json();
+                const evtChunkPromises = evtManifest.map(async (m) => {
+                    const resp = await fetch('./' + m.file);
+                    return await resp.json();
+                });
+                const evtChunks = await Promise.all(evtChunkPromises);
+                eventsData = [];
+                for (const chunk of evtChunks) {
+                    for (const r of chunk) eventsData.push(r);
+                }
+                console.log('Events loaded:', eventsData.length, 'rows');
+            }
         }
 
         // ─── Tabs ───
@@ -486,8 +567,8 @@
                     tabContent.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
                     const tab = tabContent.dataset.tab;
-                    if (tab === 'user' && selectedUser) updateUserChart();
-                    if (tab === 'org' && selectedOrg) { highlightedMember = null; updateOrgChart(); }
+                    if (tab === 'user' && selectedUser) { updateUserChart(); updateUserFeatureCharts(); }
+                    if (tab === 'org' && selectedOrg) { highlightedMember = null; updateOrgChart(); updateOrgFeatureCharts(); }
                 });
             });
         }
@@ -553,13 +634,11 @@
             document.getElementById('bannerUserName').textContent = user.u || '(no name)';
             document.getElementById('bannerUserEmail').textContent = user.e + (user.c ? ' | ' + user.c : '');
 
-            // Last active date
             const la = lastActiveMap.get(user.e);
             document.getElementById('bannerUserLastActive').textContent = la
                 ? 'Last active: ' + fmtDate(la) + ' (' + daysAgoText(la) + ')'
                 : 'No usage recorded';
 
-            // Org context
             const orgInfo = emailToOrg.get(user.e);
             const orgEl = document.getElementById('bannerUserOrg');
             if (orgInfo && orgInfo.length > 0) {
@@ -576,6 +655,7 @@
             }
 
             updateUserChart();
+            updateUserFeatureCharts();
         }
 
         // ─── Org Search ───
@@ -666,6 +746,7 @@
 
             computeSameDomainUsers(org);
             updateOrgChart();
+            updateOrgFeatureCharts();
         }
 
         // ─── Same Domain Upsell ───
@@ -718,7 +799,6 @@
             const period = getActivePeriod('user');
             const { startStr, endStr } = getDateRange(period);
 
-            // Also get prior period for trend
             const priorEnd = new Date(parseDate(startStr));
             priorEnd.setDate(priorEnd.getDate() - 1);
             const priorStart = new Date(priorEnd);
@@ -729,9 +809,8 @@
             const filtered = usageData.filter(r => r.e === selectedUser.e && r.d >= startStr && r.d <= endStr);
             const priorFiltered = usageData.filter(r => r.e === selectedUser.e && r.d >= priorStartStr && r.d <= priorEndStr);
 
-            // Daily minutes + session counts
             const dailyMap = new Map();
-            const sessionMap = new Map(); // date → count of rows (sessions)
+            const sessionMap = new Map();
             for (const r of filtered) {
                 dailyMap.set(r.d, (dailyMap.get(r.d) || 0) + r.m);
                 sessionMap.set(r.d, (sessionMap.get(r.d) || 0) + 1);
@@ -763,14 +842,12 @@
                 sessionValues = sortedMonths.map(mk => monthSessMap.get(mk) || 0);
             }
 
-            // Stats
             const totalMin = filtered.reduce((s, r) => s + r.m, 0);
             const totalSessions = filtered.length;
             const activeDays = dailyMap.size;
             const avgDaily = activeDays > 0 ? totalMin / activeDays : 0;
             let peakMin = 0; dailyMap.forEach(v => { if (v > peakMin) peakMin = v; });
 
-            // Prior stats for trend
             const priorTotalMin = priorFiltered.reduce((s, r) => s + r.m, 0);
             const priorSessions = priorFiltered.length;
             const priorActiveDays = priorDailyMap.size;
@@ -782,32 +859,27 @@
             document.getElementById('activeDaysStat').textContent = activeDays;
             document.getElementById('sessionCountStat').textContent = totalSessions.toLocaleString();
 
-            // Trend indicators
             setTrend('totalUsageTrend', totalMin, priorTotalMin);
             setTrend('avgDailyTrend', avgDaily, priorAvgDaily);
             setTrend('sessionCountTrend', totalSessions, priorSessions);
 
-            // Render chart (single axis — sessions shown below)
             if (userChartObj) userChartObj.destroy();
             userChartObj = new Chart(document.getElementById('userChart'), {
                 type: 'bar',
                 data: {
                     labels,
-                    datasets: [
-                        {
-                            label: 'Usage (minutes)',
-                            data: minValues,
-                            backgroundColor: '#2563eb',
-                            borderColor: '#1e40af',
-                            borderWidth: 1,
-                            borderRadius: 4
-                        }
-                    ]
+                    datasets: [{
+                        label: 'Usage (minutes)',
+                        data: minValues,
+                        backgroundColor: '#2563eb',
+                        borderColor: '#1e40af',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
                 },
                 options: userChartOptions(isShort)
             });
 
-            // Populate session row below chart
             const sessRow = document.getElementById('userSessionRow');
             const sessVals = document.getElementById('userSessionValues');
             sessRow.style.display = 'flex';
@@ -825,9 +897,7 @@
                     tooltip: {
                         backgroundColor: '#1f2937', titleFont: { size: 13 }, bodyFont: { size: 12 },
                         padding: 10, cornerRadius: 6,
-                        callbacks: {
-                            label: ctx => ctx.parsed.y.toFixed(1) + ' min'
-                        }
+                        callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' min' }
                     }
                 },
                 scales: {
@@ -845,6 +915,240 @@
             };
         }
 
+        // ─── Feature Charts (User) ───
+        function updateUserFeatureCharts() {
+            if (!selectedUser || eventsData.length === 0) {
+                document.getElementById('userFeatureSection').style.display = 'none';
+                return;
+            }
+
+            const period = getActivePeriod('user');
+            const { startStr, endStr } = getDateRange(period);
+            const filtered = eventsData.filter(r => r.e === selectedUser.e && r.d >= startStr && r.d <= endStr);
+
+            const section = document.getElementById('userFeatureSection');
+            if (filtered.length === 0) {
+                section.style.display = 'block';
+                if (userFeatureLineObj) { userFeatureLineObj.destroy(); userFeatureLineObj = null; }
+                if (userFeatureBarObj) { userFeatureBarObj.destroy(); userFeatureBarObj = null; }
+                document.getElementById('userFeatureLineChart').parentElement.innerHTML = '<div class="feature-no-data">No feature data for this period</div><canvas id="userFeatureLineChart"></canvas>';
+                document.getElementById('userFeatureBarChart').parentElement.innerHTML = '<div class="feature-no-data">No feature data for this period</div><canvas id="userFeatureBarChart"></canvas>';
+                return;
+            }
+            section.style.display = 'block';
+
+            // Ensure canvases exist
+            ensureCanvas('userFeatureLineChart');
+            ensureCanvas('userFeatureBarChart');
+
+            renderFeatureLineChart(filtered, period, 'userFeatureLineChart', 'userFeatureLine');
+            renderFeatureBarChart(filtered, 'userFeatureBarChart', 'userFeatureBar');
+        }
+
+        // ─── Feature Charts (Org) ───
+        function updateOrgFeatureCharts() {
+            if (!selectedOrg || eventsData.length === 0) {
+                document.getElementById('orgFeatureSection').style.display = 'none';
+                return;
+            }
+
+            const period = getActivePeriod('org');
+            const { startStr, endStr } = getDateRange(period);
+            const memberEmails = new Set(selectedOrg.members.map(m => m.e));
+            const filtered = eventsData.filter(r => memberEmails.has(r.e) && r.d >= startStr && r.d <= endStr);
+
+            const section = document.getElementById('orgFeatureSection');
+            if (filtered.length === 0) {
+                section.style.display = 'block';
+                if (orgFeatureLineObj) { orgFeatureLineObj.destroy(); orgFeatureLineObj = null; }
+                if (orgFeatureBarObj) { orgFeatureBarObj.destroy(); orgFeatureBarObj = null; }
+                document.getElementById('orgFeatureLineChart').parentElement.innerHTML = '<div class="feature-no-data">No feature data for this period</div><canvas id="orgFeatureLineChart"></canvas>';
+                document.getElementById('orgFeatureBarChart').parentElement.innerHTML = '<div class="feature-no-data">No feature data for this period</div><canvas id="orgFeatureBarChart"></canvas>';
+                return;
+            }
+            section.style.display = 'block';
+
+            ensureCanvas('orgFeatureLineChart');
+            ensureCanvas('orgFeatureBarChart');
+
+            renderFeatureLineChart(filtered, period, 'orgFeatureLineChart', 'orgFeatureLine');
+            renderFeatureBarChart(filtered, 'orgFeatureBarChart', 'orgFeatureBar');
+        }
+
+        function ensureCanvas(id) {
+            let canvas = document.getElementById(id);
+            if (!canvas) {
+                // Re-create canvas if it was removed
+                const wraps = document.querySelectorAll('.feature-chart-wrap');
+                for (const w of wraps) {
+                    if (w.querySelector('.feature-no-data')) {
+                        w.innerHTML = `<canvas id="${id}"></canvas>`;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // ─── Shared Feature Line Chart Renderer ───
+        function renderFeatureLineChart(filtered, period, canvasId, chartKey) {
+            const isShort = period <= 60;
+
+            // Aggregate by date
+            const dateMap = new Map(); // date → {D:0, A:0, ...}
+            for (const r of filtered) {
+                if (!dateMap.has(r.d)) dateMap.set(r.d, {D:0,A:0,P:0,I:0,T:0,X:0,R:0,B:0});
+                const agg = dateMap.get(r.d);
+                for (const k of FEAT_KEYS) agg[k] += (r[k] || 0);
+            }
+
+            let labels, dateKeys;
+            if (isShort) {
+                dateKeys = getWeekdaysInRange(
+                    Array.from(dateMap.keys()).sort()[0] || getDateRange(period).startStr,
+                    getDateRange(period).endStr
+                );
+                labels = dateKeys.map(d => fmtShort(parseDate(d)));
+            } else {
+                // Aggregate by month
+                const monthAgg = new Map();
+                for (const [d, counts] of dateMap) {
+                    const mk = d.substring(0, 7);
+                    if (!monthAgg.has(mk)) monthAgg.set(mk, {D:0,A:0,P:0,I:0,T:0,X:0,R:0,B:0});
+                    const a = monthAgg.get(mk);
+                    for (const k of FEAT_KEYS) a[k] += counts[k];
+                }
+                dateKeys = Array.from(monthAgg.keys()).sort();
+                labels = dateKeys.map(ym => { const [y,m] = ym.split('-'); return MONTHS[parseInt(m)-1]+'-'+y; });
+                // Replace dateMap with monthAgg for dataset building
+                dateMap.clear();
+                for (const [mk, counts] of monthAgg) dateMap.set(mk, counts);
+            }
+
+            // Find which features have any data
+            const totals = {D:0,A:0,P:0,I:0,T:0,X:0,R:0,B:0};
+            for (const counts of dateMap.values()) {
+                for (const k of FEAT_KEYS) totals[k] += counts[k];
+            }
+            const activeFeats = FEAT_KEYS.filter(k => totals[k] > 0);
+
+            const datasets = activeFeats.map(k => ({
+                label: FEAT_LABELS[k],
+                data: dateKeys.map(dk => (dateMap.get(dk) || {})[k] || 0),
+                borderColor: FEAT_COLORS[k],
+                backgroundColor: FEAT_COLORS[k] + '20',
+                borderWidth: 2,
+                pointRadius: isShort ? 3 : 4,
+                pointHoverRadius: 6,
+                tension: 0.3,
+                fill: false
+            }));
+
+            // Destroy previous
+            if (chartKey === 'userFeatureLine' && userFeatureLineObj) userFeatureLineObj.destroy();
+            if (chartKey === 'orgFeatureLine' && orgFeatureLineObj) orgFeatureLineObj.destroy();
+
+            const chart = new Chart(document.getElementById(canvasId), {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            display: true, position: 'top',
+                            labels: { font: { size: 11, weight: '500' }, usePointStyle: true, pointStyle: 'circle', padding: 12 }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1f2937', titleFont: { size: 12 }, bodyFont: { size: 11 },
+                            padding: 10, cornerRadius: 6,
+                            callbacks: {
+                                label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString() + ' events'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Event Count', font: { size: 11, weight: '600' }, color: '#6b7280' },
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: 'rgba(0,0,0,0.04)' }
+                        },
+                        x: {
+                            ticks: { color: '#9ca3af', maxRotation: 45, autoSkip: true, maxTicksLimit: 15 },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            if (chartKey === 'userFeatureLine') userFeatureLineObj = chart;
+            if (chartKey === 'orgFeatureLine') orgFeatureLineObj = chart;
+        }
+
+        // ─── Shared Feature Horizontal Bar Chart Renderer ───
+        function renderFeatureBarChart(filtered, canvasId, chartKey) {
+            // Compute totals per category
+            const totals = {D:0,A:0,P:0,I:0,T:0,X:0,R:0,B:0};
+            for (const r of filtered) {
+                for (const k of FEAT_KEYS) totals[k] += (r[k] || 0);
+            }
+
+            // Sort by total descending, only include non-zero
+            const sorted = FEAT_KEYS
+                .map(k => ({ key: k, label: FEAT_LABELS[k], total: totals[k], color: FEAT_COLORS[k] }))
+                .filter(x => x.total > 0)
+                .sort((a, b) => b.total - a.total);
+
+            if (chartKey === 'userFeatureBar' && userFeatureBarObj) userFeatureBarObj.destroy();
+            if (chartKey === 'orgFeatureBar' && orgFeatureBarObj) orgFeatureBarObj.destroy();
+
+            const chart = new Chart(document.getElementById(canvasId), {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(x => x.label),
+                    datasets: [{
+                        label: 'Total Events',
+                        data: sorted.map(x => x.total),
+                        backgroundColor: sorted.map(x => x.color + 'cc'),
+                        borderColor: sorted.map(x => x.color),
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1f2937', bodyFont: { size: 12 },
+                            padding: 10, cornerRadius: 6,
+                            callbacks: {
+                                label: ctx => ctx.parsed.x.toLocaleString() + ' events'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Total Events', font: { size: 11, weight: '600' }, color: '#6b7280' },
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: 'rgba(0,0,0,0.04)' }
+                        },
+                        y: {
+                            ticks: { color: '#374151', font: { size: 12, weight: '600' } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            if (chartKey === 'userFeatureBar') userFeatureBarObj = chart;
+            if (chartKey === 'orgFeatureBar') orgFeatureBarObj = chart;
+        }
+
         // ─── Org Chart (hours) ───
         function updateOrgChart() {
             if (!selectedOrg) return;
@@ -852,7 +1156,6 @@
             const period = getActivePeriod('org');
             const { startStr, endStr } = getDateRange(period);
 
-            // Prior period for MoM
             const priorEnd = new Date(parseDate(startStr));
             priorEnd.setDate(priorEnd.getDate() - 1);
             const priorStart = new Date(priorEnd);
@@ -891,7 +1194,6 @@
 
             orgChartData = { labels, orgValues, dateKeys, isShort, memberDailyMap, filtered, dailyMap };
 
-            // Stats in hours
             const totalMin = filtered.reduce((s, r) => s + r.m, 0);
             const priorTotalMin = priorFiltered.reduce((s, r) => s + r.m, 0);
             const activeDays = dailyMap.size;
@@ -903,10 +1205,8 @@
             document.getElementById('orgPeakDayStat').textContent = fmtHours(peakMin);
             document.getElementById('orgActiveDaysStat').textContent = activeDays;
 
-            // MoM trend
             setTrend('orgTotalTrend', totalMin, priorTotalMin);
 
-            // Usage concentration
             const memberStats = new Map();
             for (const r of filtered) {
                 if (!memberStats.has(r.e)) memberStats.set(r.e, { min: 0, days: new Set() });
@@ -932,7 +1232,6 @@
                 concEl.style.display = 'none';
             }
 
-            // Member breakdown table with last-active
             const tbody = document.getElementById('memberTableBody');
             const rows = selectedOrg.members
                 .map(m => {

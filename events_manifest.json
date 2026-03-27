@@ -1,0 +1,56 @@
+[
+  {
+    "month": "2025_07",
+    "file": "events_2025_07.json",
+    "rows": 2208,
+    "bytes": 139786
+  },
+  {
+    "month": "2025_08",
+    "file": "events_2025_08.json",
+    "rows": 2275,
+    "bytes": 144940
+  },
+  {
+    "month": "2025_09",
+    "file": "events_2025_09.json",
+    "rows": 2770,
+    "bytes": 173668
+  },
+  {
+    "month": "2025_10",
+    "file": "events_2025_10.json",
+    "rows": 6356,
+    "bytes": 404398
+  },
+  {
+    "month": "2025_11",
+    "file": "events_2025_11.json",
+    "rows": 5837,
+    "bytes": 374972
+  },
+  {
+    "month": "2025_12",
+    "file": "events_2025_12.json",
+    "rows": 3935,
+    "bytes": 256518
+  },
+  {
+    "month": "2026_01",
+    "file": "events_2026_01.json",
+    "rows": 4149,
+    "bytes": 282537
+  },
+  {
+    "month": "2026_02",
+    "file": "events_2026_02.json",
+    "rows": 4827,
+    "bytes": 330663
+  },
+  {
+    "month": "2026_03",
+    "file": "events_2026_03.json",
+    "rows": 4607,
+    "bytes": 322048
+  }
+]
