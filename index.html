@@ -945,7 +945,7 @@
             renderFeatureBarChart(filtered, 'userFeatureBarChart', 'userFeatureBar');
         }
 
-        // ─── Feature Charts (Org) ───
+        // ─── Feature Charts (Org) — with member highlight support ───
         function updateOrgFeatureCharts() {
             if (!selectedOrg || eventsData.length === 0) {
                 document.getElementById('orgFeatureSection').style.display = 'none';
@@ -971,8 +971,17 @@
             ensureCanvas('orgFeatureLineChart');
             ensureCanvas('orgFeatureBarChart');
 
-            renderFeatureLineChart(filtered, period, 'orgFeatureLineChart', 'orgFeatureLine');
-            renderFeatureBarChart(filtered, 'orgFeatureBarChart', 'orgFeatureBar');
+            // If a member is highlighted, also get their individual events
+            let memberFiltered = null;
+            let memberName = null;
+            if (highlightedMember) {
+                memberFiltered = filtered.filter(r => r.e === highlightedMember);
+                const member = selectedOrg.members.find(m => m.e === highlightedMember);
+                memberName = member ? (member.u || highlightedMember) : highlightedMember;
+            }
+
+            renderFeatureLineChart(filtered, period, 'orgFeatureLineChart', 'orgFeatureLine', memberFiltered, memberName);
+            renderFeatureBarChart(filtered, 'orgFeatureBarChart', 'orgFeatureBar', memberFiltered, memberName);
         }
 
         function ensureCanvas(id) {
@@ -989,16 +998,26 @@
             }
         }
 
-        // ─── Shared Feature Line Chart Renderer ───
-        function renderFeatureLineChart(filtered, period, canvasId, chartKey) {
+        // ─── Shared Feature Line Chart Renderer (with optional member highlight) ───
+        function renderFeatureLineChart(filtered, period, canvasId, chartKey, memberFiltered, memberName) {
             const isShort = period <= 60;
 
-            // Aggregate by date
-            const dateMap = new Map(); // date → {D:0, A:0, ...}
+            // Aggregate org totals by date
+            const dateMap = new Map();
             for (const r of filtered) {
                 if (!dateMap.has(r.d)) dateMap.set(r.d, {D:0,A:0,P:0,I:0,T:0,X:0,R:0,B:0});
                 const agg = dateMap.get(r.d);
                 for (const k of FEAT_KEYS) agg[k] += (r[k] || 0);
+            }
+
+            // Aggregate member data by date (if highlighted)
+            const memberDateMap = new Map();
+            if (memberFiltered && memberFiltered.length > 0) {
+                for (const r of memberFiltered) {
+                    if (!memberDateMap.has(r.d)) memberDateMap.set(r.d, {D:0,A:0,P:0,I:0,T:0,X:0,R:0,B:0});
+                    const agg = memberDateMap.get(r.d);
+                    for (const k of FEAT_KEYS) agg[k] += (r[k] || 0);
+                }
             }
 
             let labels, dateKeys;
@@ -1009,7 +1028,6 @@
                 );
                 labels = dateKeys.map(d => fmtShort(parseDate(d)));
             } else {
-                // Aggregate by month
                 const monthAgg = new Map();
                 for (const [d, counts] of dateMap) {
                     const mk = d.substring(0, 7);
@@ -1019,9 +1037,21 @@
                 }
                 dateKeys = Array.from(monthAgg.keys()).sort();
                 labels = dateKeys.map(ym => { const [y,m] = ym.split('-'); return MONTHS[parseInt(m)-1]+'-'+y; });
-                // Replace dateMap with monthAgg for dataset building
                 dateMap.clear();
                 for (const [mk, counts] of monthAgg) dateMap.set(mk, counts);
+
+                // Also aggregate member data by month
+                if (memberDateMap.size > 0) {
+                    const memberMonthAgg = new Map();
+                    for (const [d, counts] of memberDateMap) {
+                        const mk = d.substring(0, 7);
+                        if (!memberMonthAgg.has(mk)) memberMonthAgg.set(mk, {D:0,A:0,P:0,I:0,T:0,X:0,R:0,B:0});
+                        const a = memberMonthAgg.get(mk);
+                        for (const k of FEAT_KEYS) a[k] += counts[k];
+                    }
+                    memberDateMap.clear();
+                    for (const [mk, counts] of memberMonthAgg) memberDateMap.set(mk, counts);
+                }
             }
 
             // Find which features have any data
@@ -1031,17 +1061,59 @@
             }
             const activeFeats = FEAT_KEYS.filter(k => totals[k] > 0);
 
-            const datasets = activeFeats.map(k => ({
-                label: FEAT_LABELS[k],
-                data: dateKeys.map(dk => (dateMap.get(dk) || {})[k] || 0),
-                borderColor: FEAT_COLORS[k],
-                backgroundColor: FEAT_COLORS[k] + '20',
-                borderWidth: 2,
-                pointRadius: isShort ? 3 : 4,
-                pointHoverRadius: 6,
-                tension: 0.3,
-                fill: false
-            }));
+            const hasMember = memberFiltered && memberFiltered.length > 0;
+            const datasets = [];
+
+            if (hasMember) {
+                // Org lines: faded, thinner
+                for (const k of activeFeats) {
+                    datasets.push({
+                        label: 'Org — ' + FEAT_LABELS[k],
+                        data: dateKeys.map(dk => (dateMap.get(dk) || {})[k] || 0),
+                        borderColor: FEAT_COLORS[k] + '40',
+                        backgroundColor: FEAT_COLORS[k] + '08',
+                        borderWidth: 1,
+                        pointRadius: 0,
+                        tension: 0.3,
+                        fill: false,
+                        borderDash: [4, 3]
+                    });
+                }
+                // Member lines: bold, solid
+                const memberTotals = {D:0,A:0,P:0,I:0,T:0,X:0,R:0,B:0};
+                for (const counts of memberDateMap.values()) {
+                    for (const k of FEAT_KEYS) memberTotals[k] += counts[k];
+                }
+                const memberActiveFeats = activeFeats.filter(k => memberTotals[k] > 0);
+                for (const k of memberActiveFeats) {
+                    datasets.push({
+                        label: memberName + ' — ' + FEAT_LABELS[k],
+                        data: dateKeys.map(dk => (memberDateMap.get(dk) || {})[k] || 0),
+                        borderColor: FEAT_COLORS[k],
+                        backgroundColor: FEAT_COLORS[k] + '20',
+                        borderWidth: 2.5,
+                        pointRadius: isShort ? 3 : 4,
+                        pointHoverRadius: 6,
+                        tension: 0.3,
+                        fill: false
+                    });
+                }
+            } else {
+                // Normal: all org lines
+                for (const k of activeFeats) {
+                    datasets.push({
+                        label: FEAT_LABELS[k],
+                        data: dateKeys.map(dk => (dateMap.get(dk) || {})[k] || 0),
+                        borderColor: FEAT_COLORS[k],
+                        backgroundColor: FEAT_COLORS[k] + '20',
+                        borderWidth: 2,
+                        pointRadius: isShort ? 3 : 4,
+                        pointHoverRadius: 6,
+                        tension: 0.3,
+                        fill: false
+                    });
+                }
+            }
 
             // Destroy previous
             if (chartKey === 'userFeatureLine' && userFeatureLineObj) userFeatureLineObj.destroy();
@@ -1086,35 +1158,68 @@
             if (chartKey === 'orgFeatureLine') orgFeatureLineObj = chart;
         }
 
-        // ─── Shared Feature Horizontal Bar Chart Renderer ───
-        function renderFeatureBarChart(filtered, canvasId, chartKey) {
-            // Compute totals per category
+        // ─── Shared Feature Horizontal Bar Chart Renderer (with optional member highlight) ───
+        function renderFeatureBarChart(filtered, canvasId, chartKey, memberFiltered, memberName) {
+            // Compute org totals per category
             const totals = {D:0,A:0,P:0,I:0,T:0,X:0,R:0,B:0};
             for (const r of filtered) {
                 for (const k of FEAT_KEYS) totals[k] += (r[k] || 0);
             }
 
-            // Sort by total descending, only include non-zero
+            // Compute member totals if highlighted
+            const memberTotals = {D:0,A:0,P:0,I:0,T:0,X:0,R:0,B:0};
+            const hasMember = memberFiltered && memberFiltered.length > 0;
+            if (hasMember) {
+                for (const r of memberFiltered) {
+                    for (const k of FEAT_KEYS) memberTotals[k] += (r[k] || 0);
+                }
+            }
+
+            // Sort by org total descending, only include non-zero
             const sorted = FEAT_KEYS
-                .map(k => ({ key: k, label: FEAT_LABELS[k], total: totals[k], color: FEAT_COLORS[k] }))
+                .map(k => ({ key: k, label: FEAT_LABELS[k], total: totals[k], memberTotal: memberTotals[k], color: FEAT_COLORS[k] }))
                 .filter(x => x.total > 0)
                 .sort((a, b) => b.total - a.total);
 
             if (chartKey === 'userFeatureBar' && userFeatureBarObj) userFeatureBarObj.destroy();
             if (chartKey === 'orgFeatureBar' && orgFeatureBarObj) orgFeatureBarObj.destroy();
 
+            const datasets = [];
+            if (hasMember) {
+                // Faded org bars behind
+                datasets.push({
+                    label: 'Org Total',
+                    data: sorted.map(x => x.total),
+                    backgroundColor: sorted.map(x => x.color + '30'),
+                    borderColor: sorted.map(x => x.color + '60'),
+                    borderWidth: 1,
+                    borderRadius: 4
+                });
+                // Bold member bars on top
+                datasets.push({
+                    label: memberName,
+                    data: sorted.map(x => x.memberTotal),
+                    backgroundColor: sorted.map(x => x.color + 'cc'),
+                    borderColor: sorted.map(x => x.color),
+                    borderWidth: 1,
+                    borderRadius: 4
+                });
+            } else {
+                datasets.push({
+                    label: 'Total Events',
+                    data: sorted.map(x => x.total),
+                    backgroundColor: sorted.map(x => x.color + 'cc'),
+                    borderColor: sorted.map(x => x.color),
+                    borderWidth: 1,
+                    borderRadius: 4
+                });
+            }
+
             const chart = new Chart(document.getElementById(canvasId), {
                 type: 'bar',
                 data: {
                     labels: sorted.map(x => x.label),
-                    datasets: [{
-                        label: 'Total Events',
-                        data: sorted.map(x => x.total),
-                        backgroundColor: sorted.map(x => x.color + 'cc'),
-                        borderColor: sorted.map(x => x.color),
-                        borderWidth: 1,
-                        borderRadius: 4
-                    }]
+                    datasets
                 },
                 options: {
                     indexAxis: 'y',
@@ -1259,6 +1364,7 @@
                     tbody.querySelectorAll('tr').forEach(r => r.classList.remove('highlighted'));
                     if (highlightedMember) tr.classList.add('highlighted');
                     renderOrgChartWithHighlight();
+                    updateOrgFeatureCharts(); // also update feature charts with highlight
                 });
             });
 
