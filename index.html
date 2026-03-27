@@ -92,11 +92,23 @@
             background: #f9fafb; border-radius: 8px; padding: 25px; margin-bottom: 30px; border: 2px solid #e5e7eb;
         }
 
-        .chart-wrapper { position: relative; height: 400px; margin-bottom: 20px; }
+        .chart-wrapper { position: relative; height: 400px; margin-bottom: 0; }
+        .session-row {
+            display: flex; align-items: center; background: #fffbeb; border: 1px solid #fde68a;
+            border-radius: 0 0 8px 8px; padding: 6px 0; margin-bottom: 0; font-size: 0.78em; color: #b45309;
+            border-top: none;
+        }
+        .session-row-label {
+            font-weight: 600; color: #d97706; padding: 0 10px; white-space: nowrap; min-width: fit-content;
+        }
+        .session-row-values {
+            display: flex; flex: 1; justify-content: space-around; font-weight: 600;
+        }
+        .session-row-values span { text-align: center; min-width: 24px; }
         canvas { max-height: 100%; }
 
         .stats-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-top: 25px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-top: 30px;
         }
 
         .stats-card {
@@ -237,6 +249,10 @@
                 <div class="chart-container">
                     <div class="chart-wrapper">
                         <canvas id="userChart"></canvas>
+                    </div>
+                    <div class="session-row" id="userSessionRow" style="display:none;">
+                        <div class="session-row-label">Sessions</div>
+                        <div class="session-row-values" id="userSessionValues"></div>
                     </div>
                     <div class="stats-grid">
                         <div class="stats-card">
@@ -755,7 +771,7 @@
             setTrend('avgDailyTrend', avgDaily, priorAvgDaily);
             setTrend('sessionCountTrend', totalSessions, priorSessions);
 
-            // Render chart with dual axis
+            // Render chart (single axis — sessions shown below)
             if (userChartObj) userChartObj.destroy();
             userChartObj = new Chart(document.getElementById('userChart'), {
                 type: 'bar',
@@ -768,28 +784,18 @@
                             backgroundColor: '#2563eb',
                             borderColor: '#1e40af',
                             borderWidth: 1,
-                            borderRadius: 4,
-                            yAxisID: 'y',
-                            order: 2
-                        },
-                        {
-                            label: 'Sessions',
-                            data: sessionValues,
-                            type: 'line',
-                            borderColor: '#f59e0b',
-                            backgroundColor: '#f59e0b20',
-                            borderWidth: 2,
-                            pointRadius: 3,
-                            pointBackgroundColor: '#f59e0b',
-                            fill: false,
-                            tension: 0.3,
-                            yAxisID: 'y1',
-                            order: 1
+                            borderRadius: 4
                         }
                     ]
                 },
                 options: userChartOptions(isShort)
             });
+
+            // Populate session row below chart
+            const sessRow = document.getElementById('userSessionRow');
+            const sessVals = document.getElementById('userSessionValues');
+            sessRow.style.display = 'flex';
+            sessVals.innerHTML = sessionValues.map(v => `<span>${v || '-'}</span>`).join('');
         }
 
         function userChartOptions(isShort) {
@@ -799,15 +805,12 @@
                 maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false },
                 plugins: {
-                    legend: { display: true, labels: { font: { size: 12, weight: '600' }, color: '#374151', usePointStyle: true } },
+                    legend: { display: false },
                     tooltip: {
                         backgroundColor: '#1f2937', titleFont: { size: 13 }, bodyFont: { size: 12 },
                         padding: 10, cornerRadius: 6,
                         callbacks: {
-                            label: ctx => {
-                                if (ctx.dataset.yAxisID === 'y1') return ctx.parsed.y + ' sessions';
-                                return ctx.parsed.y.toFixed(1) + ' min';
-                            }
+                            label: ctx => ctx.parsed.y.toFixed(1) + ' min'
                         }
                     }
                 },
@@ -817,12 +820,6 @@
                         title: { display: true, text: yLabel, font: { size: 12, weight: '600' }, color: '#6b7280' },
                         ticks: { color: '#9ca3af', callback: v => Math.round(v) + ' min' },
                         grid: { color: 'rgba(0,0,0,0.04)' }
-                    },
-                    y1: {
-                        beginAtZero: true, position: 'right',
-                        title: { display: true, text: 'Sessions', font: { size: 12, weight: '600' }, color: '#f59e0b' },
-                        ticks: { color: '#f59e0b', stepSize: 1 },
-                        grid: { drawOnChartArea: false }
                     },
                     x: {
                         ticks: { color: '#9ca3af', maxRotation: 45, autoSkip: true, maxTicksLimit: 20 },
