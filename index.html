@@ -222,6 +222,10 @@
             display: flex; align-items: center; justify-content: center;
             height: 100%; color: #9ca3af; font-size: 0.95em; font-style: italic;
         }
+        .feature-footnote {
+            margin-top: 14px; padding: 10px 14px; background: #f8fafc; border: 1px solid #e2e8f0;
+            border-radius: 6px; font-size: 0.8em; color: #64748b; line-height: 1.5;
+        }
 
         @media (max-width: 900px) {
             .feature-charts-row { grid-template-columns: 1fr; }
@@ -320,6 +324,7 @@
                             <div class="feature-chart-wrap"><canvas id="userFeatureBarChart"></canvas></div>
                         </div>
                     </div>
+                    <div class="feature-footnote">Feature events track specific actions (drawing, AI, export, etc.). Usage time above may include passive sessions where the app was open but no tracked actions were performed.</div>
                 </div>
             </div>
 
@@ -383,6 +388,7 @@
                             <div class="feature-chart-wrap"><canvas id="orgFeatureBarChart"></canvas></div>
                         </div>
                     </div>
+                    <div class="feature-footnote">Feature events track specific actions (drawing, AI, export, etc.). Usage time above may include passive sessions where the app was open but no tracked actions were performed.</div>
                 </div>
 
                 <div id="licenseStatsContainer" style="display: none;">
