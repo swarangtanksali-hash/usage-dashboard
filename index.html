@@ -334,6 +334,12 @@
                     <input type="text" id="orgSearch" class="search-input" placeholder="Search by org name, org ID, or member email...">
                     <div id="orgAutocomplete" class="autocomplete-list"></div>
                 </div>
+                <div style="margin: -8px 0 12px 2px; font-size: 0.85em; color: #4b5563;">
+                    <label style="cursor:pointer;user-select:none;">
+                        <input type="checkbox" id="orgActiveOnly" style="vertical-align:middle;margin-right:6px;">
+                        Active subscriptions only
+                    </label>
+                </div>
 
                 <div class="period-buttons">
                     <button class="period-btn active" data-period="7">7 Days</button>
@@ -445,6 +451,7 @@
         let eventsData = []; // feature/activity events
         let userIndex = [], orgIndex = [];
         let subIndex = new Map();
+        let subAllIndex = new Map();
         let selectedUser = null, selectedOrg = null;
         let userChartObj = null, orgChartObj = null;
         let userFeatureLineObj = null, userFeatureBarObj = null;
@@ -599,6 +606,15 @@
                     const existing = subIndex.get(s.oid);
                     if (!existing || s.start > existing.start) subIndex.set(s.oid, s);
                 }
+                // Complete index — all subscriptions, preferring active then most recent start
+                const rank = (x) => (x.active && x.status === 'active') ? 2 : (x.status === 'active' ? 1 : 0);
+                const ex = subAllIndex.get(s.oid);
+                if (!ex) {
+                    subAllIndex.set(s.oid, s);
+                } else {
+                    const rs = rank(s), re = rank(ex);
+                    if (rs > re || (rs === re && (s.start || '') > (ex.start || ''))) subAllIndex.set(s.oid, s);
+                }
             }
 
             // Load events data (feature breakdown)
@@ -739,22 +755,38 @@
             let suggestions = [];
             let picking = false;
 
-            input.addEventListener('input', () => {
-                if (picking) { picking = false; return; }
+            const activeOnlyEl = document.getElementById('orgActiveOnly');
+            const runSearch = () => {
                 const q = input.value.trim();
                 if (!q) { acList.classList.remove('active'); suggestions = []; return; }
+                const activeOnly = activeOnlyEl && activeOnlyEl.checked;
                 const isNum = /^\d+$/.test(q);
+                let pool;
                 if (isNum) {
-                    suggestions = orgIndex.filter(o => String(o.oid).includes(q));
+                    pool = orgIndex.filter(o => String(o.oid).includes(q));
                 } else {
                     const ql = q.toLowerCase();
-                    suggestions = orgIndex.filter(o =>
+                    pool = orgIndex.filter(o =>
                         o.on.toLowerCase().includes(ql) ||
                         o.members.some(m => m.e.toLowerCase().includes(ql) || m.u.toLowerCase().includes(ql))
-                    ).slice(0, 12);
+                    );
                 }
+                if (activeOnly) pool = pool.filter(o => subIndex.has(o.oid));
+                // Sort: orgs with active sub first, then by name
+                pool.sort((a, b) => {
+                    const aa = subIndex.has(a.oid) ? 0 : 1;
+                    const bb = subIndex.has(b.oid) ? 0 : 1;
+                    if (aa !== bb) return aa - bb;
+                    return a.on.localeCompare(b.on);
+                });
+                suggestions = pool.slice(0, 12);
                 renderOrgSuggestions(acList, suggestions);
+            };
+            input.addEventListener('input', () => {
+                if (picking) { picking = false; return; }
+                runSearch();
             });
+            if (activeOnlyEl) activeOnlyEl.addEventListener('change', runSearch);
 
             input.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
@@ -781,8 +813,18 @@
             if (suggestions.length === 0) { acList.classList.remove('active'); return; }
             acList.innerHTML = suggestions.map((o, i) => {
                 const active = o.members.filter(m => m.status === 'active').length;
+                const sub = subAllIndex.get(o.oid);
+                let badge;
+                if (sub && sub.active && sub.status === 'active') {
+                    badge = `<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:10px;font-size:0.75em;font-weight:600;">Active${sub.plan ? ' · ' + esc(sub.plan) : ''}</span>`;
+                } else if (sub) {
+                    const label = (sub.status || 'inactive');
+                    badge = `<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:10px;font-size:0.75em;font-weight:600;">${esc(label)}${sub.plan ? ' · ' + esc(sub.plan) : ''}</span>`;
+                } else {
+                    badge = `<span style="background:#f3f4f6;color:#6b7280;padding:2px 8px;border-radius:10px;font-size:0.75em;font-weight:600;">No Subscription</span>`;
+                }
                 return `<div class="autocomplete-item" data-idx="${i}">
-                    <strong>${esc(o.on)}</strong> <span style="color:#6b7280;font-size:0.85em">(ID: ${o.oid})</span><br>
+                    <strong>${esc(o.on)}</strong> <span style="color:#6b7280;font-size:0.85em">(ID: ${o.oid})</span> ${badge}<br>
                     <span style="color:#9ca3af;font-size:0.8em">${o.members.length} members (${active} active)</span>
                 </div>`;
             }).join('');
