@@ -50,7 +50,13 @@
   {
     "month": "2026-03",
     "file": "usage_2026_03.json",
-    "rows": 5739,
-    "size": 506958
+    "rows": 7451,
+    "size": 700701
+  },
+  {
+    "month": "2026-04",
+    "file": "usage_2026_04.json",
+    "rows": 8681,
+    "size": 805248
   }
 ]
